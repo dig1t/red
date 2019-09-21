@@ -28,7 +28,7 @@ function Store.new()
 			action.player = player
 			
 			for k, callback in pairs(self._subscribers) do
-				pcall(callback, action)
+				callback(action)
 			end
 		end)
 	else
@@ -36,7 +36,7 @@ function Store.new()
 			for k, callback in pairs(self._subscribers) do
 				-- Usage example
 				-- store:subscribe(function(action) print(action.type) end)
-				pcall(callback, action)
+				callback(action)
 			end
 		end)
 	end
@@ -81,9 +81,9 @@ end
 	@param object player - player object
 	@param object location - teleport point
 ]]--
-function methods:get(type, ...)
-	if assert(type, 'Missing action type') then
-		return isServer and script.call:InvokeClient(type, ...) or script.call:InvokeServer(type, ...)
+function methods:get(action)
+	if assert(action, 'Missing action') then
+		return isServer and remotes.ServerCall:Invoke(action) or remotes.ClientCall:InvokeServer(action)
 	end
 end
 
