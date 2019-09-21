@@ -1,5 +1,7 @@
 -- src/ServerScriptStorage/red/Server.lua
 
+math.randomseed(os.time() * 1e6)
+
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local ServerScriptService = game:GetService('ServerScriptService')
 local ServerStorage = game:GetService('ServerStorage')
@@ -10,15 +12,13 @@ local _ = require(ReplicatedStorage.red.Util)
 local GameAnalytics = {} --require(ServerStorage.GameAnalytics)
 local cfg = require(ServerScriptService.red.Config)
 
-math.randomseed(os.time() * 1e6)
-
 local server = App.Server.new()
 local store = App.Store.new()
 
 local debug, dev = cfg.debug, cfg.dev
 
 local profileDB
-local profiles = {} -- convert into a store
+local profileState = App.State.new()
 
 if not dev and cfg.saveProfiles and cfg.profileStoreName then
 	profileDB = DataStore:GetDataStore(cfg.profileStoreName)
@@ -59,7 +59,7 @@ function init()
 		
 		-- Override default error handler
 		function server.error(err, userId)
-			print(err)
+			error(err, 2)
 			
 			GameAnalytics:addErrorEvent(userId or 0, {
 				severity = GameAnalytics.EGAErrorSeverity.error,
@@ -91,7 +91,7 @@ end)
 server:bind('PLAYERS_GET', function(payload)
 	local res = {}
 	
-	for k, profile in pairs(profiles) do
+	for id, profile in pairs(profileState:get()) do
 		if not profile.spectating and (
 			(payload.flag == true and profile.playing) or not payload.flag
 		) then
@@ -127,11 +127,15 @@ end)
 -- profile
 
 --[[
-	@desc gets a user's profile (SERVER-SIDE ONLY)
+	@desc gets a user's profile
 	@param object player - player
 ]]--
 server:bind('PROFILE', function(player, payload)
-	return profiles[player.userId]
+	for id, profile in pairs(profileState:get()) do
+		if player.userId == id then
+			return profile
+		end
+	end
 end)
 
 --[[
@@ -142,9 +146,6 @@ end)
 ]]--
 server:bind('PROFILE_GET', function(player, payload)
 	local profile = server:localCall('PROFILE', player)
-	
-	if not profile then return end
-	
 	local res
 	
 	if profile[payload.tbl] and profile[payload.tbl][payload.key] then
@@ -154,7 +155,7 @@ server:bind('PROFILE_GET', function(player, payload)
 	end
 	
 	return {
-		type = 'PROFILE_GET' .. '_' .. (payload.tbl and payload.key) and payload.tbl .. '_' .. payload.key or payload.key,
+		type = 'PROFILE_GET' .. '_' .. string.upper((payload.tbl and payload.key) and payload.tbl .. '_' .. payload.key or payload.tbl),
 		payload = res
 	}
 end)
@@ -168,10 +169,14 @@ server:bind('PROFILE_UPDATE', function(player, payload)
 	
 	local profile = server:localCall('PROFILE', player)
 	
-	profile.updatedKey = payload.updatedKey
+	profile.updatedKey = payload and payload.updatedKey
 	
 	if server.modules.level and profile.updatedKey == 'statistics_xp' then
-		profile.statistics.level = server:localCall('LEVEL_GET', player).payload
+		local levelOverview = server:localCall('LEVEL_OVERVIEW', player)
+		
+		profile.statistics.level = levelOverview.payload.level
+		
+		store:dispatch(player, levelOverview)
 	end
 	
 	if cfg.leaderboard_stats and player:FindFirstChild('leaderstats') then
@@ -198,18 +203,30 @@ end)
 	@param string value - value to set
 ]]--
 server:bind('PROFILE_SET', function(player, payload)
-	if player and profiles[player.userId] then
-		if profiles[player.userId][payload.key] ~= nil then
-			profiles[player.userId][payload.key] = payload.value
-		elseif profiles[player.userId][payload.tbl] ~= nil and profiles[player.userId][payload.tbl][payload.key] ~= nil then
-			profiles[player.userId][payload.tbl][payload.key] = payload.value
-		else
-			return
-		end
-		
-		local updatedKey = (payload.tbl and payload.key) and payload.tbl .. '_' .. payload.key or payload.key
-		
-		server:localCall('PROFILE_UPDATE', player, { updatedKey = updatedKey })
+	if not player then return end
+	
+	local tbl, key, value = payload.tbl, payload.key, payload.value
+	
+	local success = pcall(function()
+		profileState:set(function(state)
+			if state[player.userId] and key then
+				if not tbl and state[player.userId][key] ~= nil then
+					state[player.userId][key] = value
+				elseif tbl and state[player.userId][tbl] ~= nil and state[player.userId][tbl][key] ~= nil then
+					state[player.userId][tbl][key] = value
+				else
+					error('Could not set: ' .. key .. ' to: ' .. value)
+				end
+			end
+			
+			return state
+		end)
+	end)
+	
+	if success then
+		server:localCall('PROFILE_UPDATE', player, {
+			updatedKey = (tbl and key) and tbl .. '_' .. key or key
+		})
 	end
 end)
 
@@ -223,18 +240,16 @@ end)
 server:bind('PROFILE_ADD', function(player, payload)
 	if not player then return end
 	
-	if profiles[player.userId] then
-		local value = server:localCall('PROFILE_GET', player, {
-			tbl = payload.tbl,
-			key = payload.key
-		}).payload
-		
-		server:localCall('PROFILE_SET', player, {
-			tbl = payload.tbl,
-			key = payload.key,
-			value = payload.value + value
-		})
-	end
+	local value = server:localCall('PROFILE_GET', player, {
+		tbl = payload.tbl,
+		key = payload.key
+	}).payload
+	
+	server:localCall('PROFILE_SET', player, {
+		tbl = payload.tbl,
+		key = payload.key,
+		value = payload.value + value
+	})
 end)
 
 --[[
@@ -270,7 +285,7 @@ server:bind('PROFILE_SAVE', function(player)
 		if not profile.dontSave then
 			profile.entity = nil -- dont save the player object
 			
-			local res, success, tries = _.attempt(function()
+			local success, res, tries = _.attempt(function()
 				profileDB:UpdateAsync(player.userId, function(oldValue)
 					local prevData = oldValue or { _id = 0 } -- Simulate id if user does not have a profile saved
 					
@@ -304,10 +319,10 @@ game.Players.PlayerAdded:connect(function(player)
 	
 	local isAdmin = server:localCall('ADMIN_CHECK', player).payload
 	
-	player.Chatted:connect(function(message, recipient)
-		if cfg.events.chatted then
-			cfg.events.chatted(message, recipient)
-		end
+	player.Chatted:connect(function(message)
+		--[[if cfg.events.chatted then
+			cfg.events.chatted(message)
+		end]]
 		
 		if not isAdmin then return end
 		
@@ -320,7 +335,7 @@ game.Players.PlayerAdded:connect(function(player)
 	player.CharacterAdded:connect(function(character)
 		local humanoid = character:WaitForChild('Humanoid')
 		
-		if cfg.events.spawn then
+		--[[if cfg.events.spawn then
 			cfg.events.spawn(character)
 		end
 		
@@ -328,7 +343,7 @@ game.Players.PlayerAdded:connect(function(player)
 			humanoid.Died:connect(function()
 				cfg.events.died(player)
 			end)
-		end
+		end]]
 		
 		if cfg.spawns then
 			local spawn = _.randomObj(cfg.spawns)
@@ -348,10 +363,6 @@ game.Players.PlayerAdded:connect(function(player)
 				character.Head.CFrame = spawn.CFrame * CFrame.new(X, 8, Z)
 			end
 		end
-		
-		if isAdmin then
-			humanoid.WalkSpeed = humanoid.WalkSpeed * 1.5
-		end
 	end)
 	
 	-- profile setup
@@ -359,11 +370,11 @@ game.Players.PlayerAdded:connect(function(player)
 	
 	if server.modules.level then
 		profile.statistics.xp = 0
-		profile.statistics.level = 1 -- level starts at 0
+		profile.statistics.level = 1 -- level starts at 1
 	end
 	
 	if profileDB and player.userId > 0 then
-		local res, success, tries = _.attempt(function()
+		local success, res, tries = _.attempt(function()
 			local fetch = profileDB:GetAsync(player.userId)
 			
 			if fetch then
@@ -390,13 +401,15 @@ game.Players.PlayerAdded:connect(function(player)
 		profile.session_start = _.unix()
 	end
 	
-	profiles[player.userId] = profile
+	profileState:set(_.merge(profileState:get(), {
+		[player.userId] = profile
+	}))
 	
 	if cfg.leaderboard_stats then
-		local statistics = _({ class = 'IntValue', name = 'leaderstats' })
+		local statistics = _({ class = 'IntValue', Name = 'leaderstats' })
 		
 		for i, name in pairs(cfg.leaderboardStats) do
-			local leaderstat = _({ class = 'IntValue', name = name, parent = statistics, value = 0 })
+			local leaderstat = _({ class = 'IntValue', Name = name, Parent = statistics, Value = 0 })
 			
 			for stat, value in pairs(profile.statistics) do
 				if string.lower(name[i]) == string.lower(stat) then
@@ -418,7 +431,7 @@ game.Players.PlayerAdded:connect(function(player)
 	end
 	
 	if cfg.dev and cfg.debug then
-		warn(HTTP:JSONEncode(profile))
+		print(HTTP:JSONEncode(profile))
 	end
 	
 	server:localCall('PROFILE_UPDATE', player)
@@ -427,28 +440,34 @@ game.Players.PlayerAdded:connect(function(player)
 		payload = profile
 	})
 	
-	while player and wait(cfg.save_interval or 12) do
-		warn('Saved user data for:', player.Name)
-		server:localCall('PROFILE_SAVE', player)
-	end
+	coroutine.resume(coroutine.create(function()
+		while player and wait(cfg.save_interval or 120) do
+			server:localCall('PROFILE_SAVE', player)
+		end
+	end))
 end)
 
 game.Players.PlayerRemoving:connect(function(player)
 	server:localCall('PROFILE_SAVE', player)
+	
+	local profiles = profileState:get()
+	
+	for i, profile in pairs(profiles) do
+		if profile.userId == player.userId then
+			table.remove(profileState, i)
+		end
+	end
+	
+	profileState:set(profiles)
+	
+	--[[if cfg.events.left then
+		cfg.events.left(player)
+	end]]
+	
 	store:dispatch(true, { -- Tell all the clients that a player left
 		type = 'PLAYER_LEFT',
 		payload = player.userId
 	})
-	
-	for i, profile in pairs(profiles) do
-		if profile.userId == player.userId then
-			table.remove(profiles, i)
-		end
-	end
-	
-	if cfg.events.left then
-		cfg.events.left(player)
-	end
 end)
 
 init()

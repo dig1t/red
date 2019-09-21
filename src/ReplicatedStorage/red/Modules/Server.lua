@@ -16,6 +16,10 @@ function Server.new()
 	})
 end
 
+function methods.error(err)
+	error(err, 3)
+end
+
 function methods:bind(type, fn)
 	if (
 		assert(typeof(type) == 'string', 'Action type must be a string') and
@@ -69,7 +73,7 @@ function methods:localCall(actionType, ...)
 	) then
 		local success, res = pcall(self._actions[actionType], ...)
 		
-		if not success and self.error then
+		if not success then
 			self.error(res)
 		end
 		
@@ -84,18 +88,17 @@ function methods:call(action, player)
 		assert(self._actions[action.type], 'Action does not exist')
 	) then
 		local args = {}
-		
 		table.insert(
 			args,
 			(player and player:IsA('Player') and player) or
 			(action.player and action.player:IsA('Player') and action.player)
 		) -- Check to make sure the player argument is a valid player
-		table.insert(args, action.payload)
+		if action.payload then table.insert(args, action.payload) end
 		
-		local success, res = pcall(self._actions[action.type], args[1], args[2] and args[2])
+		local success, res = pcall(self._actions[action.type], args[1] and args[1], args[2] and args[2])
 		
-		if not success and self.error then
-			self.error(res)
+		if not success then
+			self.error(res, type(args[1]) == 'userdata' and args[1]:IsA('Player') and args[1].userId)
 		end
 		
 		return res
@@ -104,20 +107,29 @@ end
 
 function methods:init()
 	-- Hook listeners
-	function red.Remotes.Call.OnServerInvoke(player, action)
+	
+	-- store:get() called from a client
+	function red.Remotes.ClientCall.OnServerInvoke(player, action)
 		return self:call(action, player)
 	end
 	
+	-- store:get() called from the server
+	function red.Remotes.ServerCall.OnInvoke(action)
+		return self:call(action)
+	end
+	
+	-- store:dispatch() called from a client
 	red.Remotes.Client.OnServerEvent:Connect(function(player, action)
 		action.player = player
 		
 		if action.callback then
-			red.remotes.Client:FireClient(player, self:call(action, player))
+			red.Remotes.Client:FireClient(player, self:call(action, player))
 		else
 			self:call(action, player)
 		end
 	end)
 	
+	-- store:dispatch() called from the server
 	red.Remotes.Server.Event:Connect(function(action)
 		self:call(action)
 	end)

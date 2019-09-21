@@ -37,11 +37,26 @@ function State.new(preloadedState)
 		end
 	end
 	
+	function self:push(key, value)
+		local prevState = _.extend({}, _state)
+		
+		_state[key or #_state + 1] = value
+		
+		self:pushUpdates(prevState)
+	end
+	
+	--[[
+		- To mimic typescript spread operators use:
+		state:set(_.merge(state:get(), {
+			newKey = newValue
+		}))
+	]]--
 	function self:set(newState)
 		local prevState = _.extend({}, _state)
 		
 		if typeof(newState) == 'function' then
-			_state = newState(_state)
+			_state = newState(_state) or _state
+			
 			self:pushUpdates(prevState)
 		elseif typeof(newState) == 'table' then
 			for k, v in pairs(newState) do

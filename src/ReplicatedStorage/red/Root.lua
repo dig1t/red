@@ -1,7 +1,6 @@
 -- src/ReplicatedStorage/red/Root.lua
 
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
-local RunService = game:GetService('RunService')
 local _ = require(ReplicatedStorage.red.Util)
 
 local App = {}
@@ -17,20 +16,25 @@ do
 	App.remotes = script.Parent:FindFirstChild('Remotes')
 	
 	if not App.remotes then
-		remotes = Instance.new('Folder', script.Parent)
+		-- Container for remotes
+		local remotes = Instance.new('Folder', script.Parent)
 		remotes.Name = 'Remotes'
 		
-		-- Communication to clients is done through this remote
-		client = Instance.new('RemoteEvent', remotes)
+		-- store:dispatch() calls from client to server and server to client
+		local client = Instance.new('RemoteEvent', remotes)
 		client.Name = 'Client'
 		
-		-- Communication to the server is done through this remote
-		server = Instance.new('BindableEvent', remotes)
+		-- store:dispatch() calls from server to server
+		local server = Instance.new('BindableEvent', remotes)
 		server.Name = 'Server'
 		
-		-- Actions with callbacks are done through this remote
-		local call = Instance.new('RemoteFunction', remotes)
-		call.Name = 'Call'
+		-- store:get() calls from client to server
+		local clientCall = Instance.new('RemoteFunction', remotes)
+		clientCall.Name = 'ClientCall'
+		
+		-- store:get() from server to server
+		local serverCall = Instance.new('BindableFunction', remotes)
+		serverCall.Name = 'ServerCall'
 	end
 end
 

@@ -45,12 +45,12 @@ end
 levelSys.xp = function(player)
 	return store:get({
 		type = 'PROFILE_GET',
+		player = player,
 		payload = {
-			player = player,
 			tbl = 'statistics',
 			key = 'xp'
 		}
-	})
+	}).payload
 end
 
 --[[

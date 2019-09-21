@@ -16,6 +16,7 @@ cfg.events = {
 	end;
 	
 	entered = function(player)
+		
 	end;
 	
 	left = function(player)
