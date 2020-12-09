@@ -157,7 +157,7 @@ store:dispatch({ Players.Player2, Players.Player3 }, {
 ```
 
 #### Store:get(action)
-`State:get(action) -> void`
+`Store:get(action) -> void`
 
 Dispatches an action and yields until a result is returned.
 
@@ -185,7 +185,7 @@ end
 ```
 
 #### Store:subscribe(callback)
-`State:subscribe(callback) -> connectionId`
+`Store:subscribe(callback) -> connectionId`
 
 Listens for all dispatches sent to the client, if used in a Script, it will only listen to server dispatches.
 It will return a unique connection ID used for disconnecting the connection.
@@ -200,7 +200,7 @@ end)
 ```
 
 #### Store:unsubscribe(connectionId)
-`State:unsubscribe(connectionId) -> void`
+`Store:unsubscribe(connectionId) -> void`
 
 Disconnects the connection so no further callbacks are made.
 
@@ -261,7 +261,7 @@ end)
 ```
 
 #### State:unlisten(connectionId)
-`state:unlisten(connectionId) -> void`
+`State:unlisten(connectionId) -> void`
 
 Disconnects the connection so no further callbacks are made.
 
@@ -277,12 +277,12 @@ children in the state.
 will be the key, followed by the value
 
 #### State:reset()
-`state:reset() -> void`
+`State:reset() -> void`
 
 Clears the state of all children
 
 #### State:set(newState|path, value)
-`state:set(newState, [value]) -> void`
+`State:set(newState, [value]) -> void`
 
 Sets value(s) in the state.
 - If both `path` and `value` are passed. `State:set()` will assume you are setting the given index `path` valued as `value`.
