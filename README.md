@@ -5,7 +5,7 @@
 ### Server.new()
 Returns a new Server class
 
-##### Setup
+#### Setup
 ```lua
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
@@ -16,7 +16,7 @@ local server = red.Server.new() -- Constructs a new server
 server:init() -- Starts listening to dispatches
 ```
 
-##### Module Setup
+#### Module Setup
 ```lua
 local module = {}
 
@@ -94,7 +94,7 @@ server:localCall('PLAYER_KILL', Players.Player1)
 #### Store.new()
 Returns a new Store class
 
-##### Setup
+#### Setup
 ```lua
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
@@ -223,7 +223,7 @@ store:unsubscribe(connectionId) -- Stop receiving actions
 ### State.new([initialState])
 Returns a new State class. An `initialState` table can be passed as the initial state.
 
-##### Setup
+#### Setup
 ```lua
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
