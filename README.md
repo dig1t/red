@@ -37,11 +37,11 @@ module.print = function(payload)
 end
 
 module.hello = function(player, payload)
-	print(string.format('%s said hello.', player.Name))
-	
-	if payload and payload.message then
-		print(string.format('%s also says %s', payload.message))
-	end
+	print(string.format(
+		'%s said %s.',
+		player.Name,
+		payload and payload.message or 'hello'
+	))
 end
 
 return module
