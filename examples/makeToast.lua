@@ -1,29 +1,32 @@
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
-local App = require(ReplicatedStorage.red.Root)
-local _ = require(ReplicatedStorage.red.Util)
+local red = require(ReplicatedStorage.Lib.red.Root)
+local Util = require(ReplicatedStorage.Lib.red.Util)
 
-local store = App.Store.new()
+local store = red.Store.new()
 
 local enabled = false
 
-script.Parent.Touched:connect(function(part)
+script.Parent.Touched:Connect(function(part)
 	if enabled then
 		return
 	end
 	
-	local player = _.getPlayerFromPart(part)
+	local player = Util.getPlayerFromPart(part)
 	
 	if player then
 		enabled = true
+		
 		store:dispatch({
 			type = 'UI_TOAST',
 			player = player,
 			payload = {
-				message = 'Touched red part '.._.unix()
+				message = 'Touched red part ' .. os.clock()
 			}
 		})
+		
 		wait(1)
+		
 		enabled = false 
 	end
 end)
