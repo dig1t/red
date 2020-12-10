@@ -115,8 +115,6 @@ function methods:get(action)
 		for _, connection in pairs(connections) do
 			connection:Disconnect() -- Disconnect the watcher
 		end
-		
-		connections = nil
 	end)
 	
 	local start = os.clock()
