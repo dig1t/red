@@ -169,7 +169,6 @@ function methods:init()
 	-- store:dispatch() called from client
 	remotes.Client.OnServerEvent:Connect(function(player, action)
 		if action.method and action.method == 'get_result' then
-			warn('SEIFHJVWESDOIFHJCVWIOEDSFCJWSEDOIFJ')
 			return
 		end
 		
