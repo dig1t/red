@@ -58,7 +58,7 @@ server:bind('PLAYER_KILL', function(player)
 	if player and player.Character then
 		player.Character:BreakJoints()
 	end
-end)
+end, true)
 ```
 
 #### Server:unbind(actionType)
