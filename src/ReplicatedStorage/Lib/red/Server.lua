@@ -131,6 +131,7 @@ function methods:call(action, player)
 		return
 	elseif player and self._privateActions[action.type] then
 		-- Player should not be calling a private action
+		
 		return --self:sendError(player.userId .. ' attempted to call a private action')
 	end
 	
@@ -180,11 +181,13 @@ function methods:init()
 			return
 		end
 		
-		res.uid = action.uid
-		
 		-- If the action's method is "get" fire it back
 		-- to the sender
 		if action.method and action.method == 'get' then
+			assert(typeof(res) == 'table', action.type .. ' - Cannot return a ' .. typeof(res) .. ' type to a client.')
+			
+			res.uid = action.uid
+			
 			-- Change method to get result since
 			-- the server is now firing the result
 			-- to the client.
@@ -209,11 +212,13 @@ function methods:init()
 			return
 		end
 		
-		res.uid = action.uid
-		
 		-- If the action's method is "get" fire it back
 		-- to the sender
 		if action.method and action.method == 'get' then
+			assert(typeof(res) == 'table', action.type .. ' - Cannot return a ' .. typeof(res) .. ' type to a client. Only tables can be returned.')
+			
+			res.uid = action.uid
+			
 			-- Change method to get result since
 			-- the server is now firing the result
 			-- to the client.
