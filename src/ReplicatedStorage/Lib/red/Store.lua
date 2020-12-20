@@ -79,6 +79,7 @@ function methods:get(action)
 	
 	local connections = {}
 	local res
+	local responseReceived
 	
 	local promise = Promise.new(function(resolve, reject)
 		connections[#connections + 1] = isServer and remotes.Client.OnServerEvent:Connect(function(player, action)
@@ -107,6 +108,7 @@ function methods:get(action)
 		self:dispatch(action)
 	end):thenDo(function(action)
 		res = action
+		responseReceived = true
 	end):catch(function(err)
 		res = {
 			err = err
@@ -118,14 +120,14 @@ function methods:get(action)
 	end)
 	
 	local start = os.clock()
-	local timeout = 5
+	local timeout = action.timeout or 5
 	
 	repeat
 		RunService.Stepped:Wait()
-	until res ~= nil or os.clock() - start >= timeout
+	until res ~= nil or responseReceived or os.clock() - start >= timeout
 	
-	if res == nil then
-		promise:reject('Timed out')
+	if not responseReceived then
+		promise:reject('Timed out while waiting for action: "' .. action.type .. '"')
 	end
 	
 	return res
