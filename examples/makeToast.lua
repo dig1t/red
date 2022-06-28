@@ -1,7 +1,8 @@
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
-local red = require(ReplicatedStorage.Lib.red.Root)
-local Util = require(ReplicatedStorage.Lib.red.Util)
+local red = require(ReplicatedStorage.red)
+local dLib = require(ReplicatedStorage.red.Packages.dLib)
+local Util = dLib.import('Util')
 
 local store = red.Store.new()
 
@@ -25,7 +26,7 @@ script.Parent.Touched:Connect(function(part)
 			}
 		})
 		
-		wait(1)
+		Util.yield(1)
 		
 		enabled = false 
 	end

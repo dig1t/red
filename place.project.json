@@ -1,0 +1,26 @@
+{
+  "name": "red Development Place",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+
+      "red": {
+        "$path": "src",
+
+        "Packages": {
+          "$path": "Packages"
+        }
+      }
+	  },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+
+      "ServerSample": {
+        "$path": "server-sample"
+      }
+    }
+  }
+}

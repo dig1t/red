@@ -1,10 +1,14 @@
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local RunService = game:GetService('RunService')
-local Util = require(ReplicatedStorage.Lib.Util)
-local Promise = require(ReplicatedStorage.Lib.Promise)
 
+local dLib = require(script.Parent.Packages.dLib)
+local Util = dLib.import('Util')
+local Promise = dLib.import('Promise')
+
+local Constants = require(script.Parent.Constants)
+
+local remotes = ReplicatedStorage[Constants.remoteFolderName]
 local isServer = RunService:IsServer()
-local remotes = ReplicatedStorage.red
 
 local Store, methods = {}, {}
 methods.__index = methods

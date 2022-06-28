@@ -44,7 +44,9 @@ store:dispatch({
 
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
-local remotes = ReplicatedStorage.red
+local Constants = require(script.Parent.Constants)
+
+local remotes = ReplicatedStorage[Constants.remoteFolderName]
 
 local Server, methods = {}, {}
 methods.__index = methods

@@ -61,8 +61,8 @@ cfg.ga = {
 	infoLog = false;
 	verboseLog = false;
 	
-	gameKey = 'c2d51426bb037434d5dc1a4effb2fddb';
-	secret = '3356ae73844575e1ed4e46440bb2fd29bff633ad';
+	gameKey = 'c3d52426bb037434d5dc1a4effb2fddb';
+	secret = '33562e73844575e1ed4e46240bb2fd29bff633ad';
 }
 
 return cfg
