@@ -1,3 +1,12 @@
+# Installing
+## wally
+Add the below line to your wally.toml file
+```toml
+red = "dig1t/red@1.1.1"
+```
+## Roblox Studio
+Download the rbxm file from the [releases](https://github.com/dig1t/red/releases) tab and insert it into ReplicatedStorage or your location of choice.
+
 # Documentation
 
 ## Server Class
