@@ -1,0 +1,3 @@
+return {
+	remoteFolderName = 'redRemotes'
+}

@@ -1,24 +1,26 @@
 -- src/ServerScriptStorage/red/Server.lua
 
-math.randomseed(os.time() * 1e6)
+math.randomseed(os.time() * 1e4)
 
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local ServerScriptService = game:GetService('ServerScriptService')
-local ServerStorage = game:GetService('ServerStorage')
 local DataStore = game:GetService('DataStoreService')
 local HTTP = game:GetService('HttpService')
-local App = require(ReplicatedStorage.red.Root)
-local _ = require(ReplicatedStorage.red.Util)
+
+local red = require(ReplicatedStorage.red)
+local dLib = require(ReplicatedStorage.red.Packages.dLib)
+local Util = dLib.import('Util')
+
 local GameAnalytics = {} --require(ServerStorage.GameAnalytics)
 local cfg = require(ServerScriptService.red.Config)
 
-local server = App.Server.new()
-local store = App.Store.new()
+local server = red.Server.new()
+local store = red.Store.new()
 
 local debug, dev = cfg.debug, cfg.dev
 
 local profileDB
-local profileState = App.State.new()
+local profileState = red.State.new()
 
 if not dev and cfg.saveProfiles and cfg.profileStoreName then
 	profileDB = DataStore:GetDataStore(cfg.profileStoreName)
@@ -77,7 +79,7 @@ end
 	@param object location - teleport point
 ]]--
 server:bind('PLAYER_TELEPORT', function(player, payload)
-	if _.isAlive(player) then
+	if Util.isAlive(player) then
 		player.Character.PrimaryPart.CFrame = payload.location
 	end
 end)
@@ -279,18 +281,18 @@ server:bind('PROFILE_SAVE', function(player)
 		
 		-- track total play time
 		if cfg.trackTime then
-			profile.statistics.total_time = profile.statistics.total_time + (_.unix() - profile.session_start)
+			profile.statistics.total_time = profile.statistics.total_time + (Util.unix() - profile.session_start)
 		end
 		
 		if not profile.dontSave then
 			profile.entity = nil -- dont save the player object
 			
-			local success, res, tries = _.attempt(function()
+			local success, res, tries = Util.attempt(function()
 				profileDB:UpdateAsync(player.userId, function(oldValue)
 					local prevData = oldValue or { _id = 0 } -- Simulate id if user does not have a profile saved
 					
 					if profile._id == prevData._id then
-						profile._id = _.randomString(8) -- set a new 
+						profile._id = Util.randomString(8) -- set a new 
 						
 						return HTTP:JSONEncode(profile) -- Encode profile data as JSON
 					end
@@ -312,14 +314,14 @@ server:bind('PROFILE_SAVE', function(player)
 end)
 
 
-game.Players.PlayerAdded:connect(function(player)
+game.Players.PlayerAdded:Connect(function(player)
 	if server:localCall('ADMIN_CHECK_IF_BANNED', player).payload then
 		return server:localCall('ADMIN_KICK', player, 'You are banned from the game')
 	end
 	
 	local isAdmin = server:localCall('ADMIN_CHECK', player).payload
 	
-	player.Chatted:connect(function(message)
+	player.Chatted:Connect(function(message)
 		--[[if cfg.events.chatted then
 			cfg.events.chatted(message)
 		end]]
@@ -332,7 +334,7 @@ game.Players.PlayerAdded:connect(function(player)
 		})
 	end)
 	
-	player.CharacterAdded:connect(function(character)
+	player.CharacterAdded:Connect(function(character)
 		local humanoid = character:WaitForChild('Humanoid')
 		
 		--[[if cfg.events.spawn then
@@ -340,13 +342,13 @@ game.Players.PlayerAdded:connect(function(player)
 		end
 		
 		if cfg.events.died then
-			humanoid.Died:connect(function()
+			humanoid.Died:Connect(function()
 				cfg.events.died(player)
 			end)
 		end]]
 		
 		if cfg.spawns then
-			local spawn = _.randomObj(cfg.spawns)
+			local spawn = Util.randomObj(cfg.spawns)
 			
 			if spawn and character:FindFirstChild('Head') then
 				local offset = spawn:FindFirstChild('Offset')
@@ -357,8 +359,8 @@ game.Players.PlayerAdded:connect(function(player)
 					offset = offset.Value
 				end
 				
-				local X = _.random(offset.X, -offset.X)
-				local Z = _.random(offset.Z, -offset.Z)
+				local X = Util.random(offset.X, -offset.X)
+				local Z = Util.random(offset.Z, -offset.Z)
 				wait()
 				character.Head.CFrame = spawn.CFrame * CFrame.new(X, 8, Z)
 			end
@@ -374,7 +376,7 @@ game.Players.PlayerAdded:connect(function(player)
 	end
 	
 	if profileDB and player.userId > 0 then
-		local success, res, tries = _.attempt(function()
+		local success, res, tries = Util.attempt(function()
 			local fetch = profileDB:GetAsync(player.userId)
 			
 			if fetch then
@@ -398,18 +400,18 @@ game.Players.PlayerAdded:connect(function(player)
 	profile.isAdmin = isAdmin
 	
 	if cfg.players.trackTime then
-		profile.session_start = _.unix()
+		profile.session_start = Util.unix()
 	end
 	
-	profileState:set(_.merge(profileState:get(), {
+	profileState:set(Util.merge(profileState:get(), {
 		[player.userId] = profile
 	}))
 	
 	if cfg.leaderboard_stats then
-		local statistics = _({ class = 'IntValue', Name = 'leaderstats' })
+		local statistics = Util({ class = 'IntValue', Name = 'leaderstats' })
 		
 		for i, name in pairs(cfg.leaderboardStats) do
-			local leaderstat = _({ class = 'IntValue', Name = name, Parent = statistics, Value = 0 })
+			local leaderstat = Util({ class = 'IntValue', Name = name, Parent = statistics, Value = 0 })
 			
 			for stat, value in pairs(profile.statistics) do
 				if string.lower(name[i]) == string.lower(stat) then
@@ -447,7 +449,7 @@ game.Players.PlayerAdded:connect(function(player)
 	end))
 end)
 
-game.Players.PlayerRemoving:connect(function(player)
+game.Players.PlayerRemoving:Connect(function(player)
 	server:localCall('PROFILE_SAVE', player)
 	
 	local profiles = profileState:get()

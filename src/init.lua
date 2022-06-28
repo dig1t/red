@@ -1,7 +1,10 @@
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local RunService = game:GetService('RunService')
 
-local Util = require(ReplicatedStorage.Lib.Util)
+local dLib = require(script.Packages.dLib)
+local Util = dLib.import('Util')
+
+local Constants = require(script.Constants)
 
 local red = {}
 
@@ -12,12 +15,14 @@ function red.error(err)
 	print(err)
 end
 
-red.remotes = RunService:IsClient() and ReplicatedStorage:WaitForChild('red') or ReplicatedStorage:FindFirstChild('red')
+red.remotes = RunService:IsClient() and
+	ReplicatedStorage:WaitForChild(Constants.remoteFolderName) or
+	ReplicatedStorage:FindFirstChild(Constants.remoteFolderName)
 
 if not red.remotes then
 	-- Container for remotes
 	red.remotes = Instance.new('Folder')
-	red.remotes.Name = 'red'
+	red.remotes.Name = Constants.remoteFolderName
 	
 	-- store:dispatch() calls from client to server and server to client
 	local client = Instance.new('RemoteEvent')

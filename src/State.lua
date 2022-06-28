@@ -23,9 +23,8 @@ end
 return module
 ]]
 
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
-
-local Util = require(ReplicatedStorage.Lib.Util)
+local dLib = require(script.Parent.Packages.dLib)
+local Util = dLib.import('Util')
 
 local State = {}
 
