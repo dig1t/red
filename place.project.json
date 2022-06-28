@@ -7,11 +7,7 @@
       "$className": "ReplicatedStorage",
 
       "red": {
-        "$path": "src",
-
-        "Packages": {
-          "$path": "Packages"
-        }
+        "$path": "src"
       }
 	  },
 
