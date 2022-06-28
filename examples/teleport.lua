@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
 local red = require(ReplicatedStorage.red)
-local dLib = require(ReplicatedStorage.red.Packages.dLib)
+local dLib = require(ReplicatedStorage.red.dLib)
 local Util = dLib.import('Util')
 
 local store = red.Store.new()

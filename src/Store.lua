@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local RunService = game:GetService('RunService')
 
-local dLib = require(script.Parent.Packages.dLib)
+local dLib = require(script.Parent.dLib)
 local Util = dLib.import('Util')
 local Promise = dLib.import('Promise')
 
