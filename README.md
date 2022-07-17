@@ -18,7 +18,7 @@ Returns a new Server class
 ```lua
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
-local red = require(ReplicatedStorage.Lib.red)
+local red = require(ReplicatedStorage.Packages.red)
 
 local server = red.Server.new() -- Constructs a new server
 
@@ -107,7 +107,7 @@ Returns a new Store class
 ```lua
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
-local red = require(ReplicatedStorage.Lib.red)
+local red = require(ReplicatedStorage.Packages.red)
 
 local store = red.Store.new() -- Constructs a new store
 ```
@@ -236,7 +236,7 @@ Returns a new State class. An `initialState` table can be passed as the initial 
 ```lua
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
-local red = require(ReplicatedStorage.Lib.red)
+local red = require(ReplicatedStorage.Packages.red)
 
 local state = red.State.new() -- Constructs a new state
 ```
