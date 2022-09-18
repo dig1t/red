@@ -1,7 +1,7 @@
 local Maid, methods = {}, {}
 methods.__index = methods
 
-function methods:addTask(task)
+function methods:assign(task)
 	
 end
 

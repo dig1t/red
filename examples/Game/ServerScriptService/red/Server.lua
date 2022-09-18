@@ -359,8 +359,8 @@ game.Players.PlayerAdded:Connect(function(player)
 					offset = offset.Value
 				end
 				
-				local X = Util.random(offset.X, -offset.X)
-				local Z = Util.random(offset.Z, -offset.Z)
+				local X = Util.random(-offset.X, offset.X)
+				local Z = Util.random(-offset.Z, offset.Z)
 				wait()
 				character.Head.CFrame = spawn.CFrame * CFrame.new(X, 8, Z)
 			end
