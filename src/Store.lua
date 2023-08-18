@@ -187,7 +187,7 @@ function methods:subscribe(fn)
 end
 
 function methods:unsubscribe(id)
-	assert(self._subscribers[id], 'Event listener id does not exist')
+	assert(self._subscribers[id], 'Store:unsubscribe() - Event listener id does not exist')
 	
 	self._subscribers[id] = nil
 	
