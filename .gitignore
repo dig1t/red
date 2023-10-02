@@ -1,7 +1,17 @@
-# Project place file
-/place.rbxlx
+.env
+env.luau
 
-# Roblox Studio lock files
-/*.rbxlx.lock
-/*.rbxl.lock
-wally.lock
+# dependency directories
+Packages
+ServerPackages
+node_modules
+
+# build files
+placeAssets
+
+# Project place file
+*.rbxlx
+*.rbxl
+
+# temporary files
+*.lock

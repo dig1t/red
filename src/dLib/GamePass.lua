@@ -1,11 +1,11 @@
 --[[
-@name GamePass Checker
-@author dig1t
-@desc Game pass library that caches results and watches for pass purchases.
+-- @name GamePass Checker
+-- @author dig1t
+-- @desc Game pass library that caches results and watches for pass purchases.
 ]]
 
-local Marketplace = game:GetService('MarketplaceService')
-local Players = game:GetService('Players')
+local Marketplace = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
 
 local GamePass = {}
 

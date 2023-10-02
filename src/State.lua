@@ -17,14 +17,14 @@ end)
 local module = {}
 
 function module.fn(_state)
-	_state:get('nest.val')
+	_state:get("nest.val")
 end
 
 return module
 ]]
 
 local dLib = require(script.Parent.dLib)
-local Util = dLib.import('Util')
+local Util = dLib.import("Util")
 
 local State = {}
 
@@ -54,16 +54,16 @@ function State.new(initialState)
 	end
 	
 	function self:get(path) -- Todo: support for nested tables
-		if typeof(path) == 'number' then
+		if typeof(path) == "number" then
 			return _context[path] -- Return the index, if exists
 		end
 		
-		return path == true and _context or Util.treePath(_context, path, '.')
+		return path == true and _context or Util.treePath(_context, path, ".")
 		--return key and _context[key] or (key == true and _context)
 	end
 	
 	function self:listen(fn)
-		assert(typeof(fn) == 'function', 'Callback argument must be a function')
+		assert(typeof(fn) == "function", "Callback argument must be a function")
 		
 		local id = Util.randomString(8) -- Unique reference ID used for unsubscribing
 		
@@ -73,7 +73,7 @@ function State.new(initialState)
 	end
 	
 	function self:unlisten(id)
-		assert(_listeners[id], 'State listener does not exist')
+		assert(_listeners[id], "State listener does not exist")
 		
 		_listeners[id] = nil
 	end
@@ -102,14 +102,14 @@ function State.new(initialState)
 	function self:set(newState, value)
 		local prevState = Util.extend({}, _context) -- Create a local copy
 		
-		if typeof(newState) == 'function' then
+		if typeof(newState) == "function" then
 			_context = newState(_context) or _context
-		elseif typeof(newState) == 'table' then
+		elseif typeof(newState) == "table" then
 			for k, v in pairs(newState) do
 				_context[k] = v
 			end
-		elseif typeof(newState) == 'string' then
-			local path = Util.split(newState, '.', true)
+		elseif typeof(newState) == "string" then
+			local path = Util.split(newState, ".", true)
 			local res = _context
 			
 			-- Go through nest until the last nest level is reached
@@ -139,7 +139,7 @@ function State.new(initialState)
 	function self:remove(path)
 		local prevState = Util.extend({}, _context) -- Create a local copy
 		
-		local treePath = Util.split(path, '.', true)
+		local treePath = Util.split(path, ".", true)
 		local res = _context
 		
 		-- Dig through nest until the last nest level is reached
@@ -163,7 +163,9 @@ function State.new(initialState)
 		self:pushUpdates(prevState)
 	end
 	
-	return setmetatable({}, { __index = self })
+	return setmetatable({}, {
+		__index = self
+	})
 end
 
 return State

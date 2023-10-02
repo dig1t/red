@@ -16,7 +16,7 @@ Returns a new Server class
 
 #### Setup
 ```lua
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local red = require(ReplicatedStorage.Packages.red)
 
@@ -29,10 +29,10 @@ server:init() -- Starts listening to dispatches
 ```lua
 local module = {}
 
-module.name = 'module' -- Action prefix for binding actions
-module.version = '1.0.0' -- For your records
+module.name = "module" -- Action prefix for binding actions
+module.version = "1.0.0" -- For your records
 module.private = { -- Functions not available to clients
-	'MODULE_PRINT'
+	"MODULE_PRINT"
 }
 
 -- module.print will be binded as MODULE_SCRIPT
@@ -49,7 +49,7 @@ module.hello = function(player, payload)
 	print(string.format(
 		'%s said %s.',
 		player.Name,
-		payload and payload.message or 'hello'
+		payload and payload.message or "hello"
 	))
 end
 
@@ -63,7 +63,7 @@ Binds an action to the server
 
 If `private` is true, clients will be unable to dispatch this action.
 ```lua
-server:bind('PLAYER_KILL', function(player)
+server:bind("PLAYER_KILL", function(player)
 	if player and player.Character then
 		player.Character:BreakJoints()
 	end
@@ -94,9 +94,9 @@ Unbinds an action from the server
 Calls actions locally and returns an action as a response.
 Tuple parameters can be passed in this order: `player, payload`
 ```lua
-local Players = game:GetService('Players')
+local Players = game:GetService("Players")
 
-server:localCall('PLAYER_KILL', Players.Player1)
+server:localCall("PLAYER_KILL", Players.Player1)
 ```
 
 ## Store Class
@@ -105,7 +105,7 @@ Returns a new Store class
 
 #### Setup
 ```lua
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local red = require(ReplicatedStorage.Packages.red)
 
@@ -120,16 +120,16 @@ Dispatches an action
 - If two actions are defined, the defined client(s) will recieve the dispatch.
 
 ```lua
-local Players = game:GetService('Players')
+local Players = game:GetService("Players")
 
 -- Dispatch to the server
 store:dispatch({
-	type = 'PLAYER_KILL',
+	type = "PLAYER_KILL",
 	player = Players.Player1 -- The first argument in the binded action.
 })
 
 store:dispatch({
-	type = 'PLAYER_DAMAGE',
+	type = "PLAYER_DAMAGE",
 	player = { Players.Player2, Players.Player3 }
 	payload = { -- The second argument in the binded action.
 		damage = 50
@@ -137,15 +137,15 @@ store:dispatch({
 })
 
 store:dispatch({ -- Called from the server
-	type = 'GAME_STOP',
+	type = "GAME_STOP",
 	payload = { -- This would be the first argument since there is no reason to include a player parameter.
-		message = 'Game over'
+		message = "Game over"
 	}
 })
 
 -- Dispatch to all clients
 store:dispatch(true, {
-	type = 'UI_NOTIFICATION',
+	type = "UI_NOTIFICATION",
 	payload = {
 		text = 'Hello World!'
 	}
@@ -153,12 +153,12 @@ store:dispatch(true, {
 
 -- Dispatch to one client
 store:dispatch(Players.Player1, {
-	type = 'UI_SPECTATE_START'
+	type = "UI_SPECTATE_START"
 })
 
 -- Dispatch to multiple clients
 store:dispatch({ Players.Player2, Players.Player3 }, {
-	type = 'UI_GAME_TIMER',
+	type = "UI_GAME_TIMER",
 	payload = {
 		duration = 60 -- Show a countdown timer lasting 60 seconds
 	}
@@ -173,7 +173,7 @@ Dispatches an action and yields until a result is returned.
 ```lua
 -- Client
 local fetch = store:get({ -- Fetch player stats from the server
-	type = 'PLAYER_STATS',
+	type = "PLAYER_STATS",
 })
 local stats = fetch.success and fetch.payload.stats
 
@@ -183,7 +183,7 @@ end
 
 -- Server
 local fetch = store:get({ -- Fetch player stats from the server
-	type = 'PLAYER_STATS',
+	type = "PLAYER_STATS",
 	player = Players.Player1 -- If action is for a player, this parameter must be defined
 })
 local stats = fetch.success and fetch.payload.stats
@@ -202,7 +202,7 @@ It will return a unique connection ID used for disconnecting the connection.
 ```lua
 -- Clients and Servers use the same method
 store:subscribe(function(action)
-	if action.type == 'UI_NOTIFICATION' then
+	if action.type == "UI_NOTIFICATION" then
 		print(action.payload.message)
 	end
 end)
@@ -218,7 +218,7 @@ Disconnects the connection so no further callbacks are made.
 local connectionId
 
 connectionId= store:subscribe(function(action)
-	if action.type == 'HELLO_WORLD' then
+	if action.type == "HELLO_WORLD" then
 		print(action.type)
 		store:unsubscribe(connectionId) -- Stop receiving actions
 	end
@@ -234,7 +234,7 @@ Returns a new State class. An `initialState` table can be passed as the initial 
 
 #### Setup
 ```lua
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local red = require(ReplicatedStorage.Packages.red)
 
@@ -253,7 +253,7 @@ Gets a value from the state. This value can be
 nested, if true is passed for `path`, the entire state will be returned
 
 ```lua
-print(state:get('Player1.kills')) -- Prints player kills
+print(state:get("Player1.kills")) -- Prints player kills
 print(true) -- Prints the whole state table
 ```
 
@@ -264,7 +264,7 @@ Watches for changes in the state. It will return a unique connection ID used for
 ```lua
 state:listen(function(prevState, newState)
 	if prevState.Player1.position ~= newState.Player1.position then
-		print('Character moved positions')
+		print("Character moved positions")
 	end
 end)
 ```
@@ -298,11 +298,11 @@ Sets value(s) in the state.
 - If `newState` is a function, it will set the state as whatever the function returns. `State:Set()` will call the function with the current state as the first argument.
 
 ```lua
-State:set('Player1.name', 'Bob')
+State:set("Player1.name", "Bob")
 print(state.Player1.name) -- Bob
 
 State:set(function(state)
-	state.Player1.Name = 'Jack'
+	state.Player1.Name = "Jack"
 	return state -- Return the modified state back
 end)
 
@@ -315,7 +315,7 @@ print(state.Player1.name) -- Jack
 Removes a value from the state with the location of `path`.
 
 ```lua
-state:remove('Player1.weapons.sword')
+state:remove("Player1.weapons.sword")
 ```
 
 ## Games powered by red

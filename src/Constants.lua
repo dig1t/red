@@ -1,3 +1,3 @@
 return {
-	remoteFolderName = 'redRemotes'
+	REMOTE_FOLDER_NAME = "redRemotes"
 }

@@ -1,0 +1,22 @@
+{
+  "name": "red-library",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:rojo": "rojo build -o red.rbxl dev.project.json",
+    "build": "npm run build:rojo",
+    "dev": "npm run build && red.rbxl && npm start",
+    "start": "rojo serve dev.project.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dig1t/red.git"
+  },
+  "author": "dig1t",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/dig1t/red/issues"
+  },
+  "homepage": "https://github.com/dig1t/red#readme"
+}

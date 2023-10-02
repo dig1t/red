@@ -1,8 +1,8 @@
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local red = require(ReplicatedStorage.red)
 local dLib = require(ReplicatedStorage.red.dLib)
-local Util = dLib.import('Util')
+local Util = dLib.import("Util")
 
 local store = red.Store.new()
 
@@ -19,14 +19,14 @@ script.Parent.Touched:connect(function(part)
 		enabled = true
 		
 		store:dispatch({
-			type = 'PLAYER_TELEPORT',
+			type = "PLAYER_TELEPORT",
 			player = player,
 			payload = {
 				location = CFrame.new(math.random(-100, 100), 10, math.random(-100, 100))
 			}
 		})
 		
-		Util.yield(1)
+		task.wait(1)
 		
 		enabled = false 
 	end

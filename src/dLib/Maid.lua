@@ -7,9 +7,9 @@ end
 
 function methods:clean()
 	for id, task in pairs(self._tasks) do
-		if typeof(task) == 'function' then
+		if typeof(task) == "function" then
 			task()
-		elseif typeof(task) == 'RBXScriptConnection' then
+		elseif typeof(task) == "RBXScriptConnection" then
 			task:Disconnect()
 		elseif task.Destroy then
 			task:Destroy()

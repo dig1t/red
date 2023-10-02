@@ -1,8 +1,8 @@
-local TweenService = game:GetService('TweenService')
-local RunService = game:GetService('RunService')
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local dLib = require(script.Parent)
-local Util = dLib.import('Util')
+local Util = dLib.import("Util")
 
 local DEFAULT_ANIMATION_CONFIG = {
 	
@@ -18,7 +18,7 @@ function Animation.prepareAnimatedModel(model)
 	model.PrimaryPart.Anchored = true
 	
 	for _, part in pairs(model:GetDescendants()) do
-		if part ~= model.PrimaryPart and part:IsA('BasePart') then
+		if part ~= model.PrimaryPart and part:IsA("BasePart") then
 			Util.weld(part, model.PrimaryPart)
 			part.Anchored = false
 		end
@@ -26,24 +26,24 @@ function Animation.prepareAnimatedModel(model)
 end
 
 function Animation.setDefaultConfig(config)
-	assert(config and typeof(config) == 'table', 'Table must be passed to set the default animation config')
+	assert(config and typeof(config) == "table", "Table must be passed to set the default animation config")
 	
 	DEFAULT_ANIMATION_CONFIG = config
 end
 
 function Animation.animate(config)
-	assert(config and typeof(config) == 'table', 'Missing animation configuration')
+	assert(config and typeof(config) == "table", "Missing animation configuration")
 	
 	-- Support UIKit Elements
 	config.instance = config.instance and (
-		typeof(config.instance) == 'table' and config.instance.ui and config.instance.context
+		typeof(config.instance) == "table" and config.instance.ui and config.instance.context
 	) or (
-		typeof(config.instance) == 'Instance' and config.instance
+		typeof(config.instance) == "Instance" and config.instance
 	)
 	
-	assert(config.instance, 'Missing instance to animate')
-	assert(config.stop, 'Missing animation goal')
-	assert(config.tweenInfo, 'Missing TweenInfo')
+	assert(config.instance, "Missing instance to animate")
+	assert(config.stop, "Missing animation goal")
+	assert(config.tweenInfo, "Missing TweenInfo")
 	
 	-- Place default values
 	for k, v in pairs(DEFAULT_ANIMATION_CONFIG) do

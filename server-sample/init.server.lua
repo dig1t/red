@@ -1,10 +1,10 @@
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
-local Players = game:GetService('Players')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local red = require(ReplicatedStorage.red)
 
 local dLib = require(ReplicatedStorage.red.dLib)
-local Util = dLib.import('Util')
+local Util = dLib.import("Util")
 
 local server = red.Server.new()
 
@@ -13,19 +13,17 @@ do -- Initialize
 	server:init()
 	
 	function server.error(err, userId) -- Override default error handler
-		--server:localCall('ANALYTICS_ERROR', err, userId)
+		-- server:localCall("ANALYTICS_ERROR", err, userId)
 		error(err, 2)
 	end
 end
 
---[[
-	@desc teleports a player
-	@param object player - player object
-	@param object location - teleport point
-]]--
-server:bind('PLAYER_TELEPORT', function(player, payload)
+-- @desc teleports a player
+-- @param object player - player object
+-- @param object location - teleport point
+server:bind("PLAYER_TELEPORT", function(player, payload)
 	if Util.isAlive(player) then
-		Util.yield()
+		task.wait()
 		
 		player.Character.PrimaryPart.CFrame = payload.location
 	end
@@ -41,10 +39,10 @@ local function playerAdded(player)
 			end
 		end
 		
-		character:WaitForChild('Humanoid')
+		character:WaitForChild("Humanoid")
 		
 		server:call({
-			type = 'PLAYER_TELEPORT',
+			type = "PLAYER_TELEPORT",
 			player = player,
 			payload = {
 				location = CFrame.new(math.random(-100, 100), 40, math.random(-100, 100))

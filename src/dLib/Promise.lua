@@ -1,7 +1,7 @@
 --[[
-@name Promise
-@version 1.0.0
-@author dig1t
+-- @name Promise
+-- @version 1.0.0
+-- @author dig1t
 
 Variables
 	Promise.status Current status of the promise
@@ -36,12 +36,12 @@ promise = Promise.new(function(resolve, reject)
 end):thenDo(function(num)
 	return num + 1
 end):thenDo(function(num)
-	promise:reject('error')
+	promise:reject("error")
 end):catch(function(err)
 	warn(err)
 end):finally(function(num)
-	print('finally', promise.status)
-	if promise.status ~= 'rejected' then
+	print("finally", promise.status)
+	if promise.status ~= "rejected" then
 		print(num)
 	end
 end)
@@ -51,16 +51,16 @@ local Promise, methods = {}, {}
 methods.__index = methods
 
 Promise.status = {
-	pending = 'pending';
-	fulfilled = 'fulfilled';
-	rejected = 'rejected';
+	pending = "pending";
+	fulfilled = "fulfilled";
+	rejected = "rejected";
 }
 
 function methods:resolve(...)
 	if self.status ~= Promise.status.pending then
 		warn(string.format(
 			'Cannot resolve a promise %s',
-			self.status == Promise.status.rejected and 'after rejection' or 'more than once'
+			self.status == Promise.status.rejected and "after rejection" or "more than once"
 		))
 		
 		return
@@ -93,7 +93,7 @@ function methods:reject(...)
 	if self.status ~= Promise.status.pending then
 		warn(string.format(
 			'Cannot reject a promise %s',
-			self.status == Promise.status.fulfilled and 'after fulfillment' or 'more than once'
+			self.status == Promise.status.fulfilled and "after fulfillment" or "more than once"
 		))
 		
 		return
@@ -112,7 +112,7 @@ function methods:reject(...)
 end
 
 function methods:thenDo(fn)
-	assert(typeof(fn) == 'function', 'Must give a function to resolve')
+	assert(typeof(fn) == "function", "Must give a function to resolve")
 	
 	if self.status == Promise.status.fulfilled then
 		fn(unpack(self._resultArgs))
@@ -126,7 +126,7 @@ function methods:thenDo(fn)
 end
 
 function methods:catch(fn)
-	assert(typeof(fn) == 'function', 'Must give a function to catching errors')
+	assert(typeof(fn) == "function", "Must give a function to catching errors")
 	
 	if self.status == Promise.status.rejected then
 		fn(unpack(self._resultArgs))
@@ -140,8 +140,8 @@ function methods:catch(fn)
 end
 
 function methods:finally(fn)
-	assert(not self._onFinalizedCallback, 'Only one finally callback can be used')
-	assert(typeof(fn) == 'function', 'Must give a function for the finally callback')
+	assert(not self._onFinalizedCallback, "Only one finally callback can be used")
+	assert(typeof(fn) == "function", "Must give a function for the finally callback")
 	
 	if self.status == Promise.status.fulfilled or self.status == Promise.status.rejected then
 		fn(unpack(self._resultArgs))
@@ -163,7 +163,7 @@ function methods:destroy()
 end
 
 function Promise.new(fn)
-	assert(typeof(fn) == 'function', 'Must give a function to make a promise')
+	assert(typeof(fn) == "function", "Must give a function to make a promise")
 	
 	local self = setmetatable({}, methods)
 	
