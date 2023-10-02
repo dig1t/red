@@ -1,15 +1,15 @@
 --[[
-@name Palette
-@description Easy color picker using Google Material's color system to pick colors.
-@author dig1t
+-- @name Palette
+-- @description Easy color picker using Google Material's color system to pick colors.
+-- @author dig1t
 
 Functions
 	Palette(color, shade: 500) => Color3 Creates a Color3 object from the given color
 
 Examples
-local button = Instance.new('TextButton')
-local btnColor = Palette('blue', 500)
-local btnHover = Palette('blue', 300)
+local button = Instance.new("TextButton")
+local btnColor = Palette("blue", 500)
+local btnHover = Palette("blue", 300)
 
 button.BackgroundColor3 = btnColor
 
@@ -148,8 +148,8 @@ local palette = {
 return function(color, shade)
 	shade = shade or 500 -- Default shade
 	
-	assert(palette[color], color .. ' is not a valid color')
-	assert(palette[color][shadeIndex[shade]], color .. ' ' .. shade .. ' is not a valid shade')
+	assert(palette[color], color .. " is not a valid color")
+	assert(palette[color][shadeIndex[shade]], color .. " " .. shade .. " is not a valid shade")
 	
 	return Color3.fromRGB(unpack(palette[color][shadeIndex[shade]]))
 end

@@ -1,7 +1,7 @@
-local CollectionService = game:GetService('CollectionService')
+local CollectionService = game:GetService("CollectionService")
 
 local dLib = require(script.Parent)
-local Util = dLib.import('Util')
+local Util = dLib.import("Util")
 
 local lib, methods = {}, {}
 methods.__index = methods

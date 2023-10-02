@@ -1,20 +1,20 @@
 --[[
-@name Weapon System Server
-@description A weapon library for quickly building weapons.
-@author dig1t
-@version 1.1.1
+-- @name Weapon System Server
+-- @description A weapon library for quickly building weapons.
+-- @author dig1t
+-- @version 1.1.1
 ]]
 
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
-local RunService = game:GetService('RunService')
-local Workspace = game:GetService('Workspace')
-local Debris = game:GetService('Debris')
-local Players = game:GetService('Players')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Debris = game:GetService("Debris")
+local Players = game:GetService("Players")
 
 local dLib = require(script.Parent)
-local Util = dLib.import('Util')
-local WeaponClient = dLib.import('WeaponClient')
-local CollectionService = dLib.import('CollectionService')
+local Util = dLib.import("Util")
+local WeaponClient = dLib.import("WeaponClient")
+local CollectionService = dLib.import("CollectionService")
 
 -- Amount to subtract from the cooldown since players
 -- will always be ready before the server by a small amount
@@ -29,36 +29,36 @@ local DEFAULT_CONFIG = {
 	rangeModifier = .75;
 }
 
-local passthroughObjects = CollectionService.watch('BULLET_PASSTHROUGH')
+local passthroughObjects = CollectionService.watch("BULLET_PASSTHROUGH")
 
 local WeaponServer, methods = {}, {}
 methods.__index = methods
 
 -- globalWeaponRemote calls all clients to replicate
 -- weapon projectiles and tracers
-local globalWeaponRemote = ReplicatedStorage:FindFirstChild('WeaponRemote')
+local globalWeaponRemote = ReplicatedStorage:FindFirstChild("WeaponRemote")
 
 if not globalWeaponRemote then
-	globalWeaponRemote = Instance.new('RemoteEvent')
-	globalWeaponRemote.Name = 'WeaponRemote'
+	globalWeaponRemote = Instance.new("RemoteEvent")
+	globalWeaponRemote.Name = "WeaponRemote"
 	globalWeaponRemote.Parent = ReplicatedStorage
 end
 
 --[[
-@param type The type of action to identify the aciton by.
-@desc Binds an action to the remote listener
+-- @param type The type of action to identify the aciton by.
+-- @desc Binds an action to the remote listener
 so it can later be called by client-side code.
 ]]
 function methods:bind(type, fn)
-	assert(typeof(type) == 'string', 'Weapon:bind - No action type given')
-	assert(typeof(fn) == 'function', 'Weapon:bind - No function given')
+	assert(typeof(type) == "string", 'Weapon:bind - No action type given')
+	assert(typeof(fn) == "function", 'Weapon:bind - No function given')
 	
 	self.events[type] = fn
 end
 
 --[[
-@param actionType The action type to check
-@desc Checks if an action is in cooldown (example: A gun reloading)
+-- @param actionType The action type to check
+-- @desc Checks if an action is in cooldown (example: A gun reloading)
 ]]
 function methods:inCooldown(actionType)
 	if not self.lastActions[actionType] then
@@ -69,8 +69,8 @@ function methods:inCooldown(actionType)
 end
 
 --[[
-@param action The action to process
-@desc Simplified "red" store. Processes an action. The action must include
+-- @param action The action to process
+-- @desc Simplified "red" store. Processes an action. The action must include
 an action type for it to successfully processed
 ]]
 function methods:processAction(action)
@@ -79,18 +79,18 @@ function methods:processAction(action)
 	end
 	
 	-- Process mobile button triggers
-	if action.source == 'MOBILE_CONTROL' then
+	if action.source == "MOBILE_CONTROL" then
 		self.remote:FireClient(self.localPlayer, {
-			type = 'WEAPON_REMOTE_ACTION',
+			type = "WEAPON_REMOTE_ACTION",
 			payload = {
 				actionType = action.type
 			}
 		})
 	end
 	
-	if action.type == 'WEAPON_EQUIP' then
+	if action.type == "WEAPON_EQUIP" then
 		self.equipped = Util.unix()
-	elseif action.type == 'WEAPON_UNEQUIP' then
+	elseif action.type == "WEAPON_UNEQUIP" then
 		self.equipped = nil
 	end
 	
@@ -106,8 +106,8 @@ function methods:processAction(action)
 end
 
 --[[
-@param actionType The action type to check
-@desc Makes sure the action is ready to be further processed
+-- @param actionType The action type to check
+-- @desc Makes sure the action is ready to be further processed
 by checking if the player is alive and the weapon is not currently
 in a cooldown
 ]]
@@ -117,7 +117,7 @@ end
 
 function methods:playSFX(state)
 	local id = Util.tableRandom(self.config.sfx[state])
-	self.currentSFX = self.handle:FindFirstChild(id) or Util.instance('Sound') {
+	self.currentSFX = self.handle:FindFirstChild(id) or Util.instance("Sound") {
 		Name = id,
 		Parent = self.handle,
 		SoundId = Util.asset .. id,
@@ -128,16 +128,16 @@ function methods:playSFX(state)
 end
 
 --[[
-@param player The target player
-@desc Returns the player's team color, if available
-@return Color3|nil
+-- @param player The target player
+-- @desc Returns the player's team color, if available
+-- @return Color3|nil
 ]]
 function methods:getTeam(player)
-	return player and player.Character and player.Character:FindFirstChild('Team') and player.Character.Team.Value
+	return player and player.Character and player.Character:FindFirstChild("Team") and player.Character.Team.Value
 end
 
 --[[
-@desc Tags the player with a kill tag of the local
+-- @desc Tags the player with a kill tag of the local
 player's UserId to later track who they were killed by
 ]]
 function methods:tag(player)
@@ -145,11 +145,11 @@ function methods:tag(player)
 		return
 	end
 	
-	local tag = player.Character:FindFirstChild('KillTag')
+	local tag = player.Character:FindFirstChild("KillTag")
 	
 	if not tag then
-		tag = Instance.new('NumberValue')
-		tag.Name = 'KillTag'
+		tag = Instance.new("NumberValue")
+		tag.Name = "KillTag"
 		tag.Value = self.localPlayer.UserId
 		tag.Parent = player.Character
 	else
@@ -158,12 +158,12 @@ function methods:tag(player)
 end
 
 --[[
-@param victim The player to damage
-@param amount Amount to damage player
-@desc Damages a player. If friendly fire is disabled, it will check
+-- @param victim The player to damage
+-- @param amount Amount to damage player
+-- @desc Damages a player. If friendly fire is disabled, it will check
 to make sure they are not damaging teammates. If successfully damaged
 the function will return true to let the caller know the victim was damaged
-@return true|nil
+-- @return true|nil
 ]]
 function methods:damagePlayer(victim, amount)
 	if not victim or victim == self.localPlayer then
@@ -191,19 +191,19 @@ function methods:damagePlayer(victim, amount)
 end
 
 --[[
-@param object The projectile reference to save. This object must be a descendant of ReplicatedStorage
-@desc Saves a reference of the projectile that will be later shot
+-- @param object The projectile reference to save. This object must be a descendant of ReplicatedStorage
+-- @desc Saves a reference of the projectile that will be later shot
 ]]
 function methods:setProjectileReference(object)
 	assert(object, 'WeaponServer:setProjectileReference - Missing reference object')
-	if typeof(object) == 'Instance' then
+	if typeof(object) == "Instance" then
 		--[[assert(
 			object:IsDescendantOf(ReplicatedStorage),
 			'WeaponServer:setProjectileReference - Object must be a descendant of ReplicatedStorage'
 		)]]
 	end
 	
-	if typeof(object) == 'function' then
+	if typeof(object) == "function" then
 		object = object()
 	end
 	
@@ -219,11 +219,11 @@ function methods:addMobileControlButton(name)
 		return
 	end
 	
-	local controlContainer = self.config.tool:FindFirstChild('MobileControls')
+	local controlContainer = self.config.tool:FindFirstChild("MobileControls")
 	
 	if not controlContainer then
-		controlContainer = Instance.new('Configuration')
-		controlContainer.Name = 'MobileControls'
+		controlContainer = Instance.new("Configuration")
+		controlContainer.Name = "MobileControls"
 		controlContainer.Parent = self.config.tool
 	end
 	
@@ -232,7 +232,7 @@ function methods:addMobileControlButton(name)
 		return
 	end
 	
-	local control = Instance.new('StringValue')
+	local control = Instance.new("StringValue")
 	control.Name = name
 	-- control.Value = value
 	control.Parent = controlContainer
@@ -274,7 +274,7 @@ end
 
 -- ProjectilePassThrough
 function methods:shoot(data)
-	assert(data and typeof(data) == 'table', 'WeaponServer:shoot - Missing data table')
+	assert(data and typeof(data) == "table", 'WeaponServer:shoot - Missing data table')
 	assert(data.callback, 'WeaponServer:shoot - Missing callback')
 	
 	data.origin = (
@@ -307,7 +307,7 @@ function methods:shoot(data)
 			for _, player in pairs(Players:GetPlayers()) do
 				if player ~= self.localPlayer then
 					globalWeaponRemote:FireClient(player, {
-						type = 'WEAPON_TRACER',
+						type = "WEAPON_TRACER",
 						payload = {
 							origin = data.origin,
 							direction = direction,
@@ -339,8 +339,8 @@ function methods:shoot(data)
 		
 		local projectile = data.projectile or self.projectileReference:Clone()
 		
-		if data.projectile:IsA('Model') then
-			assert(data.projectile.PrimaryPart, 'Projectile model must have a PrimaryPart defined')
+		if data.projectile:IsA("Model") then
+			assert(data.projectile.PrimaryPart, "Projectile model must have a PrimaryPart defined")
 			
 			projectile = data.projectile.PrimaryPart
 		end
@@ -424,7 +424,7 @@ function methods:destroy()
 end
 
 function WeaponServer.new(config)
-	assert(config.tool and typeof(config.tool) == 'Instance' and config.tool:IsA('Tool'), 'WeaponServer.new - Missing tool object from config')
+	assert(config.tool and typeof(config.tool) == "Instance" and config.tool:IsA("Tool"), 'WeaponServer.new - Missing tool object from config')
 	
 	local self = setmetatable({}, methods)
 	
@@ -443,20 +443,20 @@ function WeaponServer.new(config)
 		self:setProjectileReference(self.config.projectileReference)
 	end
 	
-	self.handle = config.tool:FindFirstChild('Handle')
+	self.handle = config.tool:FindFirstChild("Handle")
 	self.modelParts = WeaponClient.getModelParts(config.tool)
 	
 	if not self.handle then
-		local toolModel = config.tool:FindFirstChildOfClass('Model')
+		local toolModel = config.tool:FindFirstChildOfClass("Model")
 		
 		if toolModel then
-			self.handle = toolModel:FindFirstChild('Handle')
+			self.handle = toolModel:FindFirstChild("Handle")
 			self.handle.Parent = config.tool
 			
 			assert(self.handle, 'WeaponServer.new - Tool model must have a handle')
 			
 			self.modelParts = Util.map(toolModel:GetDescendants(), function(obj)
-				if obj:IsA('BasePart') then
+				if obj:IsA("BasePart") then
 					Util.weld(obj, self.handle) -- Weld the part to the handle
 					
 					obj.Anchored = false
@@ -478,8 +478,8 @@ function WeaponServer.new(config)
 	self.connections = {}
 	self.lastActions = {}
 	
-	self.remote = Instance.new('RemoteEvent')
-	self.remote.Name = 'Remote'
+	self.remote = Instance.new("RemoteEvent")
+	self.remote.Name = "Remote"
 	self.remote.Parent = config.tool
 	
 	self.raycastFilter = RaycastParams.new()
@@ -487,7 +487,7 @@ function WeaponServer.new(config)
 	
 	-- Weld extra parts to the handle
 	--[[for _, obj in pairs(config.tool:GetDescendants()) do
-		if obj:IsA('BasePart') and obj ~= self.handle then
+		if obj:IsA("BasePart") and obj ~= self.handle then
 			Util.weld(obj, self.handle)
 			obj.Parent = self.handle
 		end
@@ -504,12 +504,12 @@ function WeaponServer.new(config)
 	end
 	-- End weapon configuration
 	
-	local animations = Instance.new('Folder')
-	animations.Name = 'Animations'
+	local animations = Instance.new("Folder")
+	animations.Name = "Animations"
 	
 	Util.map(self.config.animations, function(idList, state)
 		return Util.map(idList, function(id)
-			Util.instance('Animation') {
+			Util.instance("Animation") {
 				Name = id,
 				AnimationId = Util.asset .. id,
 				Parent = animations
@@ -521,7 +521,7 @@ function WeaponServer.new(config)
 	
 	-- Start listening for dispatched actions from the remote
 	self.connections.remote = self.remote.OnServerEvent:Connect(function(player, action)
-		assert(typeof(action) == 'table', 'Weapon action must be a table')
+		assert(typeof(action) == "table", "Weapon action must be a table")
 		
 		if not self.localPlayer then
 			self.localPlayer = player
@@ -548,15 +548,15 @@ function WeaponServer.new(config)
 			-- Mock action as if it came from the client
 			-- This will prevent equip/unequip action spam
 			self:processAction({
-				type = config.tool:IsDescendantOf(self.localPlayer) and 'WEAPON_UNEQUIP' or 'WEAPON_EQUIP'
+				type = config.tool:IsDescendantOf(self.localPlayer) and "WEAPON_UNEQUIP" or "WEAPON_EQUIP"
 			})
 		end
 		
 		detectLocation()
-		self.connections.equipListener = config.tool:GetPropertyChangedSignal('Parent'):Connect(detectLocation)
+		self.connections.equipListener = config.tool:GetPropertyChangedSignal("Parent"):Connect(detectLocation)
 	end)()
 	
-	Util.set(config.tool, 'Ready', true) -- TODO: Replace with config.tool:setAttribute('Ready', true)
+	Util.set(config.tool, "Ready", true) -- TODO: Replace with config.tool:setAttribute("Ready", true)
 	
 	return self
 end

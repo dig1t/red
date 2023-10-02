@@ -1,13 +1,17 @@
 {
-  "name": "red Development Place",
+  "name": "red dev",
   "tree": {
     "$className": "DataModel",
 
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
 
-      "red": {
-        "$path": "src"
+      "Packages": {
+        "$className": "Folder",
+
+        "red": {
+          "$path": "src"
+        }
       }
 	  },
 

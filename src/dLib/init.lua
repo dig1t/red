@@ -1,6 +1,6 @@
 --[[
-@name dLib
-@author dig1t
+-- @name dLib
+-- @author dig1t
 ]]
 
 local Util = require(script.Util)
@@ -10,22 +10,22 @@ local loadedModules = {
 }
 
 local function import(path)
-	assert(typeof(path) == 'string', 'dLib.import - Path is not a string')
+	assert(typeof(path) == "string", 'dLib.import - Path is not a string')
 
 	-- Return module if it was already used
 	if loadedModules[path] then
 		return loadedModules[path]
 	end
 
-	local modulePath = Util.treePath(script, path, '/')
+	local modulePath = Util.treePath(script, path, "/")
 
 	assert(modulePath, 'dLib.import - Missing module ' .. path)
 	--[[assert(
-		modulePath:IsA('ModuleScript'),
+		modulePath:IsA("ModuleScript"),
 		string.format('dLib.import - %s is not a ModuleScript instance', path)
 	)]]
 
-	if modulePath and modulePath:IsA('ModuleScript') then
+	if modulePath and modulePath:IsA("ModuleScript") then
 		local success, res = pcall(function()
 			return require(modulePath)
 		end)

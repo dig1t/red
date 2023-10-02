@@ -8,7 +8,7 @@ search.getDescendantCount = function(obj)
 	local count = 0
 	
 	for _, part in pairs(obj:GetDescendants()) do
-		if part:IsA('BasePart') then
+		if part:IsA("BasePart") then
 			count += 1
 		end
 	end
@@ -24,7 +24,7 @@ search.getDescendantParts = function(obj)
 	local parts = {}
 	
 	for _, part in pairs(obj:GetDescendants()) do
-		if part:IsA('BasePart') then
+		if part:IsA("BasePart") then
 			parts[#parts + 1] = part
 		end
 	end
@@ -37,7 +37,7 @@ search.getAncestor = function(child, condition)
 		return
 	end
 	
-	if type(condition) == 'string' then
+	if typeof(condition) == "string" then
 		local searchString = condition
 		
 		condition = function(obj)
@@ -63,7 +63,7 @@ search.find = function(parent, condition, maxRounds, round)
 		round = 1
 	end
 	
-	local test = type(condition) == 'string' and function(obj)
+	local test = typeof(condition) == "string" and function(obj)
 		return obj and obj.Name == condition
 	end or condition
 	
@@ -99,9 +99,9 @@ search.exists = function(obj, name)
 		return
 	end
 	
-	if type(name) == 'string' then
-		return typeof(obj) == 'Instance' and obj:FindFirstChild(name) or obj[name]
-	elseif type(name) == 'table' then
+	if typeof(name) == "string" then
+		return typeof(obj) == "Instance" and obj:FindFirstChild(name) or obj[name]
+	elseif typeof(name) == "table" then
 		for _, v in pairs(name) do
 			if not obj[v] then
 				return false
@@ -113,7 +113,7 @@ search.exists = function(obj, name)
 end
 
 search.getFirstPart = function(model)
-	local children = type(model) == 'table' and model or model:GetChildren()
+	local children = typeof(model) == "table" and model or model:GetChildren()
 	
 	if not children or #children == 0 then
 		return
@@ -123,9 +123,9 @@ search.getFirstPart = function(model)
 	
 	repeat
 		i += 1
-	until children[i]:IsA('BasePart') or i < #children
+	until children[i]:IsA("BasePart") or i < #children
 	
-	return children[i]:IsA('BasePart') and children[i]
+	return children[i]:IsA("BasePart") and children[i]
 end
 
 return search

@@ -1,17 +1,17 @@
 --[[
-@name Part Exploder
-@desc Breaks blocks and throws its fragments in it's forward face
-@author dig1t
+-- @name Part Exploder
+-- @desc Breaks blocks and throws its fragments in it's forward face
+-- @author dig1t
 ]]
 
-local Workspace = game:GetService('Workspace')
-local Physics = game:GetService('PhysicsService')
+local Workspace = game:GetService("Workspace")
+local Physics = game:GetService("PhysicsService")
 
 local dLib = require(script.Parent)
-local Util = dLib.import('Util')
+local Util = dLib.import("Util")
 
-local PLAYER_COLLISION_GROUP_NAME = 'Player'
-local PROPS_COLLISION_GROUP_NAME = 'Props'
+local PLAYER_COLLISION_GROUP_NAME = "Player"
+local PROPS_COLLISION_GROUP_NAME = "Props"
 local COLLIDABLE = false -- Players cannot interact with these objects
 
 local methods = {}
@@ -79,14 +79,14 @@ function methods:_breakPart(part)
 		)
 		
 		if self.config.throw then
-			local attachment = Instance.new('Attachment')
-			attachment.Name = 'GlassAttachment'
+			local attachment = Instance.new("Attachment")
+			attachment.Name = "GlassAttachment"
 			attachment.Position = fragment.CFrame:ToObjectSpace(
 				newPosition + (fragment.CFrame.LookVector * 4)
 			).Position
 			attachment.Parent = fragment
 			
-			local force = Instance.new('VectorForce')
+			local force = Instance.new("VectorForce")
 			force.Force = fragment.CFrame:ToObjectSpace(
 				newPosition + (fragment.CFrame.LookVector * 40)
 			).Position
@@ -118,8 +118,8 @@ function methods:destroy()
 end
 
 --[[
-@param part BasePart|table part or list of parts to destroy
-@param config table Explosion modifications
+-- @param part BasePart|table part or list of parts to destroy
+-- @param config table Explosion modifications
 	{
 		clean = true; -- Remove fragments after a set amount of time (cleanTime) 
 		cleanTime = 8; -- Time until fragments are removed
@@ -128,11 +128,11 @@ end
 	}
 ]]
 return function(part, config)
-	assert(typeof(part) == 'Instance' and part:IsA('BasePart') or typeof(part) == 'table', 'Missing part(s) to break')
+	assert(typeof(part) == "Instance" and part:IsA("BasePart") or typeof(part) == "table", 'Missing part(s) to break')
 	
 	local self = setmetatable({}, methods)
 	
-	self.config = typeof(config or nil) == 'table' and config or {
+	self.config = typeof(config or nil) == "table" and config or {
 		clean = true;
 		cleanTime = 1;
 		throw = true;
@@ -141,16 +141,16 @@ return function(part, config)
 	
 	coroutine.wrap(function()
 		for _, obj in pairs(
-			typeof(obj) == 'Instance' and { obj } or obj
+			typeof(obj) == "Instance" and { obj } or obj
 		) do
-			if typeof(obj) == 'Instance' and part:IsA('BasePart') then
+			if typeof(obj) == "Instance" and part:IsA("BasePart") then
 				coroutine.wrap(function()
 					self:_breakPart(obj)
 				end)()
 			end
 		end
 		
-		Util.yield(.85)
+		task.wait(.85)
 		
 		if self.config.throw then
 			for _, fragment in pairs(self.fragments) do
@@ -160,7 +160,7 @@ return function(part, config)
 			end
 		end
 		
-		Util.yield(self.config.cleanTime or 8)
+		task.wait(self.config.cleanTime or 8)
 		
 		if self.config.clean and self.fragments then
 			self:destroy()

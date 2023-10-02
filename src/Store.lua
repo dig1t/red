@@ -1,33 +1,33 @@
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
-local RunService = game:GetService('RunService')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local dLib = require(script.Parent.dLib)
-local Util = dLib.import('Util')
-local Promise = dLib.import('Promise')
+local Util = dLib.import("Util")
+local Promise = dLib.import("Promise")
 
 local Constants = require(script.Parent.Constants)
 
-local remotes = ReplicatedStorage[Constants.remoteFolderName]
+local remotes = ReplicatedStorage[Constants.REMOTE_FOLDER_NAME]
 local isServer = RunService:IsServer()
 
-local Store, methods = {}, {}
-methods.__index = methods
+local Store = {}
+Store.__index = Store
 
 --[[
 	@desc dispatches an action
 	@param player|boolean arg[1] - determines who receives the action event (optional)
 	@param object action arg[1]|arg[2] - action
 ]]--
-function methods:dispatch(...)
+function Store:dispatch(...): nil
 	local args = {...}
 	
 	local action = #args == 1 and args[1] or args[2]
 	
-	assert(typeof(action) == 'table', 'Action must be a table')
-	assert(action.type, 'Action must have an action type')
+	assert(typeof(action) == "table", "Action must be a table")
+	assert(action.type, "Action must have an action type")
 	
-	local recipient = #args == 2 and (typeof(args[1]) == 'Instance' or typeof(args[1]) == 'table') and args[1]
-	local fireToAll = #args == 2 and type(args[1]) == 'boolean' and args[1]
+	local recipient = #args == 2 and (typeof(args[1]) == "Instance" or typeof(args[1]) == "table") and args[1]
+	local fireToAll = #args == 2 and typeof(args[1]) == "boolean" and args[1]
 	
 	if isServer then
 		action.success = not action.err
@@ -38,7 +38,7 @@ function methods:dispatch(...)
 	end
 	
 	--[[if not action.method then
-		action.method = 'post'
+		action.method = "post"
 	end]]
 	
 	if #args == 1 then
@@ -48,12 +48,12 @@ function methods:dispatch(...)
 			remotes.Client:FireServer(action)
 		end
 	elseif #args == 2 then
-		assert(isServer, 'Dispatcher must be the server')
+		assert(isServer, "Dispatcher must be the server")
 		
 		if recipient and not fireToAll then
-			if typeof(recipient) == 'Instance' then
+			if typeof(recipient) == "Instance" then
 				remotes.Client:FireClient(recipient, action)
-			elseif typeof(recipient) == 'table' then
+			elseif typeof(recipient) == "table" then
 				for _, player in pairs(recipient) do
 					remotes.Client:FireClient(player, action)
 				end
@@ -66,52 +66,60 @@ function methods:dispatch(...)
 	end
 end
 
+type Action = {
+	uid: string?,
+	method: string?,
+	player: Player?
+}
+
+type SubscriptionId = string
+
 --[[
 	@desc dispatches an action with a unique id,
 		then yields and watches for incoming actions
 		with the same tag and returns the action as a result
 	@return result
 ]]--
-function methods:get(action)
-	assert(typeof(action) == 'table', 'Action must be a table')
-	assert(action.type, 'Action must have an action type')
+function Store:get(action: Action): any
+	assert(typeof(action) == "table", "Action must be a table")
+	assert(action.type, "Action must have an action type")
 	
 	local uid = Util.randomString(8)
 	
 	action.uid = uid
-	action.method = 'get'
+	action.method = "get"
 	
 	local connections = {}
 	local res
 	local responseReceived
 	
 	local promise = Promise.new(function(resolve, reject)
-		connections[#connections + 1] = isServer and remotes.Client.OnServerEvent:Connect(function(player, action)
+		connections[#connections + 1] = isServer and remotes.Client.OnServerEvent:Connect(function(player, _action)
 			-- From client
-			action.player = player
+			_action.player = player
 			
-			if action.method == 'get_result' and action.uid == uid then
-				resolve(action)
+			if _action.method == "get_result" and _action.uid == uid then
+				resolve(_action)
 			end
-		end) or remotes.Client.OnClientEvent:Connect(function(action)
+		end) or remotes.Client.OnClientEvent:Connect(function(_action)
 			-- From server
-			if action.method == 'get_result' and action.uid == uid then
-				resolve(action)
+			if _action.method == "get_result" and _action.uid == uid then
+				resolve(_action)
 			end
 		end)
 		
 		if isServer then
-			connections[#connections + 1] = remotes.Server.Event:Connect(function(action)
+			connections[#connections + 1] = remotes.Server.Event:Connect(function(_action)
 				-- From server
-				if action.method == 'get_result' and action.uid == uid then
-					resolve(action)
+				if _action.method == "get_result" and _action.uid == uid then
+					resolve(_action)
 				end
 			end)
 		end
 		
 		self:dispatch(action)
-	end):thenDo(function(action)
-		res = action
+	end):thenDo(function(_action)
+		res = _action
 		responseReceived = true
 	end):catch(function(err)
 		res = {
@@ -131,14 +139,14 @@ function methods:get(action)
 	until res ~= nil or responseReceived or os.clock() - start >= timeout
 	
 	if not responseReceived then
-		promise:reject('Timed out while waiting for action: "' .. action.type .. '"')
+		promise:reject('Timed out while waiting for action: "" .. action.type .. ""')
 	end
 	
 	return res
 end
 
-function methods:_callSubscribers(action, safeCall)
-	if not action.type or action.method == 'get' or action.method == 'get_result' then
+function Store:_callSubscribers(action, safeCall)
+	if not action.type or action.method == "get" or action.method == "get_result" then
 		-- Ignore get method actions, these
 		-- will be processed by store:get()
 		return
@@ -153,31 +161,37 @@ function methods:_callSubscribers(action, safeCall)
 	end
 end
 
-function methods:subscribe(fn)
-	assert(typeof(fn) == 'function', 'Callback argument must exist and be a function')
+function Store:subscribe(fn: () -> nil): SubscriptionId
+	assert(typeof(fn) == "function", "Callback argument must exist and be a function")
 	
-	local id = Util.randomString(8) -- Unique reference ID used for unsubscribing
+	local id: SubscriptionId = Util.randomString(8) -- Unique reference ID used for unsubscribing
 	
 	if Util.tableLength(self._subscribers) == 0 then
 		-- Hook connections to start receiving events
 		
 		if isServer then
 			-- From client
-			self._connections[#self._connections + 1] = remotes.Client.OnServerEvent:Connect(function(player, action)
-				action.player = player
-				
-				self:_callSubscribers(action, true)
-			end)
+			self._connections[#self._connections + 1] = remotes.Client.OnServerEvent:Connect(
+				function(player: Player, action: Action)
+					action.player = player
+					
+					self:_callSubscribers(action, true)
+				end
+			)
 			
 			-- From server
-			self._connections[#self._connections + 1] = remotes.Server.Event:Connect(function(action)
-				self:_callSubscribers(action, true)
-			end)
+			self._connections[#self._connections + 1] = remotes.Server.Event:Connect(
+				function(action: Action)
+					self:_callSubscribers(action, true)
+				end
+			)
 		else
 			-- From client
-			self._connections[#self._connections + 1] = remotes.Client.OnClientEvent:Connect(function(action)
-				self:_callSubscribers(action)
-			end)
+			self._connections[#self._connections + 1] = remotes.Client.OnClientEvent:Connect(
+				function(action: Action)
+					self:_callSubscribers(action)
+				end
+			)
 		end
 	end
 	
@@ -186,7 +200,7 @@ function methods:subscribe(fn)
 	return id
 end
 
-function methods:unsubscribe(id)
+function Store:unsubscribe(id: SubscriptionId): nil
 	assert(self._subscribers[id], 'Store:unsubscribe() - Event listener id does not exist')
 	
 	self._subscribers[id] = nil
@@ -203,7 +217,7 @@ function methods:unsubscribe(id)
 end
 
 function Store.new()
-	local self = setmetatable({}, methods)
+	local self = setmetatable({}, Store)
 	
 	self._connections = {}
 	self._subscribers = {}

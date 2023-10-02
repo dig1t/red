@@ -5,12 +5,12 @@
 --- boolean adminsExempt - Any admins included in the command call will not be inserted into the targets table
 
 local dLib = require(script.Parent)
-local Util = dLib.import('Util')
+local Util = dLib.import("Util")
 
 local ChatCommand, methods = {}, {}
 methods.__index = methods
 
-local PREFIX = '/'
+local PREFIX = "/"
 local PREFIX_LENGTH = #PREFIX
 
 local _commands = {}
@@ -21,7 +21,7 @@ ChatCommand.minimumLevel = Util.userLevel.normal
 function ChatCommand.use(source)
 	local res = source
 	
-	if typeof(source) == 'Instance' then
+	if typeof(source) == "Instance" then
 		local success, err = pcall(function()
 			res = require(source)
 		end)
@@ -32,15 +32,15 @@ function ChatCommand.use(source)
 	end
 	
 	for name, command in pairs(res) do
-		assert(command[1], 'Missing function for command: ' .. name)
+		assert(command[1], "Missing function for command: " .. name)
 	end
 	
 	Util.extend(_commands, res)
 end
 
 function ChatCommand.insert(name, command)
-	assert(name, 'Missing command name')
-	assert(command[1], 'Missing function for command: ' .. name)
+	assert(name, "Missing command name")
+	assert(command[1], "Missing function for command: " .. name)
 	
 	_commands[name] = command
 end
@@ -48,11 +48,11 @@ end
 function ChatCommand.getPlayers(player, text, ignoreIfDead)
 	local targets = {}
 	
-	if text == 'me' or not text then
+	if text == "me" or not text then
 		return { player }
-	elseif text == 'all' then
+	elseif text == "all" then
 		targets = game.Players:GetPlayers()
-	elseif text == 'others' then
+	elseif text == "others" then
 		targets = game.Players:GetPlayers()
 		
 		for i, v in pairs(targets) do
@@ -81,7 +81,7 @@ function ChatCommand.getPlayers(player, text, ignoreIfDead)
 end
 
 function ChatCommand.test(text)
-	return text:sub(0, PREFIX_LENGTH) == '/'
+	return text:sub(0, PREFIX_LENGTH) == "/"
 end
 
 function ChatCommand.exists(name)
@@ -131,14 +131,14 @@ end
 
 function ChatCommand.new(data)
 	assert(data.player, 'ChatCommand.new - Player missing')
-	assert(typeof(data.text) == 'string', 'ChatCommand.new - Text argument must be a string')
+	assert(typeof(data.text) == "string", 'ChatCommand.new - Text argument must be a string')
 	
 	local self = setmetatable({}, methods)
 	
 	-- Make sure the string starts with the defined prefix
 	if ChatCommand.test(data.text) then
 		self.test = string.lower(data.text)
-		self.sections = data.text:sub(PREFIX_LENGTH + 1):split(' ')
+		self.sections = data.text:sub(PREFIX_LENGTH + 1):split(" ")
 		self.player = data.player
 		self.userLevel = data.userLevel or Util.userLevel.normal
 		

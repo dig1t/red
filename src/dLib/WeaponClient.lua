@@ -1,21 +1,21 @@
 --[[
-@name Weapon System Client
-@description A weapon library for quickly building weapons.
-@author dig1t
-@version 1.1.0
+-- @name Weapon System Client
+-- @description A weapon library for quickly building weapons.
+-- @author dig1t
+-- @version 1.1.0
 ]]
 
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
-local UserInput = game:GetService('UserInputService')
-local Players = game:GetService('Players')
-local RunService = game:GetService('RunService')
-local Workspace = game:GetService('Workspace')
-local Debris = game:GetService('Debris')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInput = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Debris = game:GetService("Debris")
 
 local dLib = require(script.Parent)
-local Util = dLib.import('Util')
-local Animation = dLib.import('Animation')
-local CollectionService = dLib.import('CollectionService')
+local Util = dLib.import("Util")
+local Animation = dLib.import("Animation")
+local CollectionService = dLib.import("CollectionService")
 
 local DEFAULT_CONFIG = {
 	hitscan = true; -- No projectiles will be rendered
@@ -26,7 +26,7 @@ local DEFAULT_CONFIG = {
 	rangeModifier = .75;
 }
 
-local passthroughObjects = CollectionService.watch('BULLET_PASSTHROUGH')
+local passthroughObjects = CollectionService.watch("BULLET_PASSTHROUGH")
 
 local mouse
 
@@ -38,7 +38,7 @@ function methods:setCursor(id)
 		return
 	end
 	
-	self.currentCursor = id and self.equipped and Util.asset .. id or ''
+	self.currentCursor = id and self.equipped and Util.asset .. id or ""
 	mouse.Icon = self.currentCursor
 end
 
@@ -50,8 +50,8 @@ string eventName (InputBegan, InputEnded, TouchTap)
 ]]
 
 --[[
-weapon:unsetInput('primary') -- get rid of this input
-weapon:unsetInputCondition('canUse') -- get rid of this condition check
+weapon:unsetInput("primary") -- get rid of this input
+weapon:unsetInputCondition("canUse") -- get rid of this condition check
 ]]
 
 function methods:inCooldown(inputName)
@@ -92,9 +92,9 @@ function methods:_onInputEvent(eventName, ...)
 end
 
 function methods:setInput(inputName, data)
-	assert(inputName, 'Missing input name')
-	assert(typeof(data) == 'table', 'Missing data table')
-	assert(Util.tableLength(data) > 0, 'No events to watch')
+	assert(inputName, "Missing input name")
+	assert(typeof(data) == "table", "Missing data table")
+	assert(Util.tableLength(data) > 0, "No events to watch")
 	assert(not self._inputData[inputName], string.format('Input %s already exists', inputName))
 	
 	for eventName, condition in pairs(data) do
@@ -120,33 +120,33 @@ function methods:setInput(inputName, data)
 end
 
 function methods:setInputCondition(inputName, condition)
-	assert(self._inputData[inputName], 'Not a valid input type')
+	assert(self._inputData[inputName], "Not a valid input type")
 	
 	self._inputData[inputName].condition = condition
 end
 
 function methods:onInputAttempt(inputName, callback)
-	assert(self._inputData[inputName], 'Not a valid input type')
-	assert(typeof(callback) == 'function', 'Not a valid callback type')
+	assert(self._inputData[inputName], "Not a valid input type")
+	assert(typeof(callback) == "function", "Not a valid callback type")
 	
 	self._inputData[inputName].onError = callback
 end
 
 function methods:unsetInputCondition(inputName)
-	assert(self._inputData[inputName], 'Not a valid input type')
+	assert(self._inputData[inputName], "Not a valid input type")
 	
 	self._inputData[inputName].condition = nil
 end
 
 function methods:onInput(inputName, callback)
-	assert(self._inputData[inputName], 'Not a valid input type')
-	assert(typeof(callback) == 'function', 'Not a valid callback type')
+	assert(self._inputData[inputName], "Not a valid input type")
+	assert(typeof(callback) == "function", "Not a valid callback type")
 	
 	self._inputData[inputName].callback = callback
 end
 
 function methods:unwatchInput(inputName)
-	assert(self._inputData[inputName], 'Not a valid input type')
+	assert(self._inputData[inputName], "Not a valid input type")
 	
 	self._inputData[inputName].callback = nil
 end
@@ -162,8 +162,8 @@ function methods:getInputCooldownTime(inputName)
 end
 
 function methods:bindActionToInput(actionType, inputName)
-	assert(actionType, 'Missing action type')
-	assert(self._inputData[inputName], 'Not a valid input type')
+	assert(actionType, "Missing action type")
+	assert(self._inputData[inputName], "Not a valid input type")
 	
 	if not self._inputData[inputName].actionBindings then
 		self._inputData[inputName].actionBindings = {}
@@ -233,7 +233,7 @@ function methods:shoot()
 	origin = origin.CFrame * CFrame.new(0, 1.5, 0)
 	
 	self.remote:FireServer({
-		type = 'WEAPON_SHOOT',
+		type = "WEAPON_SHOOT",
 		payload = {
 			target = target,
 			origin = origin
@@ -280,12 +280,12 @@ end
 
 function WeaponClient.getModelParts(tool)
 	return Util.map(tool:GetDescendants(), function(obj)
-		return obj:IsA('BasePart') and obj.Name ~= 'Handle' and obj or nil
+		return obj:IsA("BasePart") and obj.Name ~= "Handle" and obj or nil
 	end)
 end
 
 function WeaponClient.getProjectile(data)
-	assert(data and typeof(data) == 'table', 'WeaponClient.getProjectile - Missing data table')
+	assert(data and typeof(data) == "table", 'WeaponClient.getProjectile - Missing data table')
 	assert(data.handle, 'WeaponClient.getProjectile - Missing weapon handle')
 	
 	local modelParts = data.modelParts or (data.tool and WeaponClient.getModelParts(data.tool)) or {}
@@ -299,10 +299,10 @@ function WeaponClient.getProjectile(data)
 		projectile = data.handle:Clone()
 	else -- Model extras exist
 		local handleClone = data.handle:Clone()
-		projectile = Instance.new('Model')
+		projectile = Instance.new("Model")
 		handleClone.Parent = projectile
 		projectile.PrimaryPart = handleClone
-		projectile.Name = 'Projectile'
+		projectile.Name = "Projectile"
 		
 		for _, part in pairs(modelParts) do
 			if part.Parent then
@@ -318,7 +318,7 @@ end
 
 function methods:fireTracer(data)
 	assert(
-		data and typeof(data) == 'table',
+		data and typeof(data) == "table",
 		'WeaponClient.fireTracer - Missing data'
 	)
 	
@@ -344,7 +344,7 @@ function methods:fireTracer(data)
 	
 	local tracer = newTracer
 	
-	if newTracer:IsA('Model') then
+	if newTracer:IsA("Model") then
 		if not newTracer.PrimaryPart then
 			warn('WeaponClient.fireTracer - Projectile model must have a PrimaryPart defined')
 			return
@@ -395,7 +395,7 @@ function methods:fireTracer(data)
 				
 				Util.weld(tracer, hit.Instance)
 				
-				for _, part in pairs(newTracer:IsA('Model') and newTracer:GetChildren() or { newTracer }) do
+				for _, part in pairs(newTracer:IsA("Model") and newTracer:GetChildren() or { newTracer }) do
 					part.Anchored = false
 				end
 				
@@ -424,22 +424,22 @@ function WeaponClient.watch()
 	self.raycastFilter = RaycastParams.new()
 	self.raycastFilter.FilterType = Enum.RaycastFilterType.Blacklist
 	
-	self.remote = Util.waitForChild(ReplicatedStorage, 'WeaponRemote')
+	self.remote = Util.waitForChild(ReplicatedStorage, "WeaponRemote")
 	
 	self.remote.OnClientEvent:Connect(function(action)
-		assert(action and typeof(action) == 'table', 'WeaponClient.watch - Missing action')
+		assert(action and typeof(action) == "table", 'WeaponClient.watch - Missing action')
 		assert(action.type, 'WeaponClient.watch - Missing action type')
 		assert(action.payload, 'WeaponClient.watch - Missing action payload')
 		
-		if action.type == 'WEAPON_TRACER' then
+		if action.type == "WEAPON_TRACER" then
 			self:fireTracer(action.payload)
 		end
 	end)
 end
 
 function WeaponClient.new(config)
-	assert(config.tool, 'Missing tool object from config')
-	assert(config.tool:WaitForChild('Handle'), 'Missing tool handle')
+	assert(config.tool, "Missing tool object from config")
+	assert(config.tool:WaitForChild("Handle"), "Missing tool handle")
 	
 	local self = setmetatable({}, methods)
 	
@@ -462,15 +462,15 @@ function WeaponClient.new(config)
 	while (
 		not Players.LocalPlayer.Character or
 		not Players.LocalPlayer.Character.Parent or
-		not config.tool:FindFirstChild('Ready')
+		not config.tool:FindFirstChild("Ready")
 	) do
 		RunService.RenderStepped:Wait()
 	end
 	
 	self.localPlayer = Players.LocalPlayer
 	self.localCharacter = self.localPlayer.Character or self.localPlayer.CharacterAdded:Wait()
-	self.localHumanoid = self.localCharacter:WaitForChild('Humanoid')
-	self.remote = config.tool:WaitForChild('Remote')
+	self.localHumanoid = self.localCharacter:WaitForChild("Humanoid")
+	self.remote = config.tool:WaitForChild("Remote")
 	self.handle = config.tool.Handle
 	self.modelParts = WeaponClient.getModelParts(config.tool)
 	
@@ -491,7 +491,7 @@ function WeaponClient.new(config)
 				end
 				
 				if mouse.Target and mouse.Target.Parent and (
-					mouse.Target.Parent:FindFirstChild('Humanoid') or mouse.Target.Parent.Parent:FindFirstChild('Humanoid')
+					mouse.Target.Parent:FindFirstChild("Humanoid") or mouse.Target.Parent.Parent:FindFirstChild("Humanoid")
 				) then
 					self:setCursor(config.cursor.target)
 					return
@@ -546,7 +546,7 @@ function WeaponClient.new(config)
 		self:setCursor()
 	end)
 	
-	config.tool:WaitForChild('Animations')
+	config.tool:WaitForChild("Animations")
 	
 	-- Load animations
 	self.animations = Util.map(config.animations, function(idList, state)
@@ -556,17 +556,17 @@ function WeaponClient.new(config)
 	end)
 	
 	self.remote:FireServer({
-		type = 'WEAPON_INIT'
+		type = "WEAPON_INIT"
 	})
 	
 	self.remote.OnClientEvent:Connect(function(action)
-		if typeof(action) ~= 'table' or not action.type then
+		if typeof(action) ~= "table" or not action.type then
 			return
 		end
 		
 		-- An action was dispatched to the weapon server
 		-- remotely, 
-		if action.type == 'WEAPON_REMOTE_ACTION' then
+		if action.type == "WEAPON_REMOTE_ACTION" then
 			local actionType = action.payload and action.payload.actionType
 			
 			if not actionType then
@@ -579,7 +579,7 @@ function WeaponClient.new(config)
 			self:playAnimation(action.payload.actionType)
 			
 			if self.currentActionId == actionId and self.equipped then
-				self:playAnimation('WEAPON_HOLD', true)
+				self:playAnimation("WEAPON_HOLD", true)
 			end
 		end
 	end)

@@ -1,17 +1,14 @@
--- src/ServerScriptStorage/red/Server.lua
-
 math.randomseed(os.time() * 1e4)
 
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
-local ServerScriptService = game:GetService('ServerScriptService')
-local DataStore = game:GetService('DataStoreService')
-local HTTP = game:GetService('HttpService')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
+local DataStore = game:GetService("DataStoreService")
+local HTTP = game:GetService("HttpService")
 
 local red = require(ReplicatedStorage.red)
 local dLib = require(ReplicatedStorage.red.dLib)
-local Util = dLib.import('Util')
+local Util = dLib.import("Util")
 
-local GameAnalytics = {} --require(ServerStorage.GameAnalytics)
 local cfg = require(ServerScriptService.red.Config)
 
 local server = red.Server.new()
@@ -29,47 +26,6 @@ end
 function init()
 	server:loadModules(script:GetChildren())
 	
-	if cfg.useGA then
-		GameAnalytics:setEnabledInfoLog(cfg.ga.infoLog or cfg.dev)
-		GameAnalytics:setEnabledVerboseLog(cfg.ga.verboseLog or cfg.dev)
-		
-		if cfg.ga.customDimensions01 then
-			GameAnalytics:configureAvailableCustomDimensions01(cfg.ga.customDimensions01 or {})
-		end
-		
-		if cfg.ga.customDimensions02 then
-			GameAnalytics:configureAvailableCustomDimensions02(cfg.ga.customDimensions02 or {})
-		end
-		
-		if cfg.ga.customDimensions03 then
-			GameAnalytics:configureAvailableCustomDimensions03(cfg.ga.customDimensions03 or {})
-		end
-		
-		if cfg.ga.currencies then
-			GameAnalytics:configureAvailableResourceCurrencies(cfg.ga.currencies)
-		end
-		
-		if cfg.ga.itemTypes then
-			GameAnalytics:configureAvailableResourceItemTypes(cfg.ga.itemTypes)
-		end
-		
-		GameAnalytics:configureBuild(cfg.build)
-		GameAnalytics:initialize({
-			gameKey = cfg.ga.gameKey,
-			secretKey = cfg.ga.secret
-		})
-		
-		-- Override default error handler
-		function server.error(err, userId)
-			error(err, 2)
-			
-			GameAnalytics:addErrorEvent(userId or 0, {
-				severity = GameAnalytics.EGAErrorSeverity.error,
-				message = 'Something went bad in some of the smelly code!'
-			})
-		end
-	end
-	
 	server:init()
 end
 
@@ -78,7 +34,7 @@ end
 	@param object player - player object
 	@param object location - teleport point
 ]]--
-server:bind('PLAYER_TELEPORT', function(player, payload)
+server:bind("PLAYER_TELEPORT", function(player, payload)
 	if Util.isAlive(player) then
 		player.Character.PrimaryPart.CFrame = payload.location
 	end
@@ -90,7 +46,7 @@ end)
 	@desc returns all players not spectating
 	@param boolean flag - return list for players playing a game (optional)
 ]]--
-server:bind('PLAYERS_GET', function(payload)
+server:bind("PLAYERS_GET", function(payload)
 	local res = {}
 	
 	for id, profile in pairs(profileState:get()) do
@@ -111,13 +67,13 @@ end)
 	@param string value - value to set
 	@param boolean playing - run if users are playing a game or not (optional)
 ]]--
-server:bind('PLAYERS_SET', function(payload)
-	local players = server:localCall('PLAYERS_GET', {
+server:bind("PLAYERS_SET", function(payload)
+	local players = server:localCall("PLAYERS_GET", {
 		flag = payload.playing
 	})
 	
 	for k, player in pairs(players) do
-		server:localCall('PROFILE_SET', player, {
+		server:localCall("PROFILE_SET", player, {
 			tbl = payload.tbl,
 			key = payload.key,
 			value = payload.value
@@ -132,7 +88,7 @@ end)
 	@desc gets a user's profile
 	@param object player - player
 ]]--
-server:bind('PROFILE', function(player, payload)
+server:bind("PROFILE", function(player, payload)
 	for id, profile in pairs(profileState:get()) do
 		if player.userId == id then
 			return profile
@@ -146,8 +102,8 @@ end)
 	@param string tbl - table name
 	@param string key - key name
 ]]--
-server:bind('PROFILE_GET', function(player, payload)
-	local profile = server:localCall('PROFILE', player)
+server:bind("PROFILE_GET", function(player, payload)
+	local profile = server:localCall("PROFILE", player)
 	local res
 	
 	if profile[payload.tbl] and profile[payload.tbl][payload.key] then
@@ -157,7 +113,7 @@ server:bind('PROFILE_GET', function(player, payload)
 	end
 	
 	return {
-		type = 'PROFILE_GET' .. '_' .. string.upper((payload.tbl and payload.key) and payload.tbl .. '_' .. payload.key or payload.tbl),
+		type = "PROFILE_GET" .. "_" .. string.upper((payload.tbl and payload.key) and payload.tbl .. "_" .. payload.key or payload.tbl),
 		payload = res
 	}
 end)
@@ -166,22 +122,22 @@ end)
 	@desc updates a user's leaderstats and dispatches PROFILE_UPDATE to the user
 	@param object player - player
 ]]--
-server:bind('PROFILE_UPDATE', function(player, payload)
+server:bind("PROFILE_UPDATE", function(player, payload)
 	if not player then return end
 	
-	local profile = server:localCall('PROFILE', player)
+	local profile = server:localCall("PROFILE", player)
 	
 	profile.updatedKey = payload and payload.updatedKey
 	
-	if server.modules.level and profile.updatedKey == 'statistics_xp' then
-		local levelOverview = server:localCall('LEVEL_OVERVIEW', player)
+	if server.modules.level and profile.updatedKey == "statistics_xp" then
+		local levelOverview = server:localCall("LEVEL_OVERVIEW", player)
 		
 		profile.statistics.level = levelOverview.payload.level
 		
 		store:dispatch(player, levelOverview)
 	end
 	
-	if cfg.leaderboard_stats and player:FindFirstChild('leaderstats') then
+	if cfg.leaderboard_stats and player:FindFirstChild("leaderstats") then
 		for k, score in pairs(player.leaderstats:GetChildren()) do
 			for stat, value in pairs(profile.statistics) do
 				if string.lower(score.Name) == string.lower(stat) then
@@ -192,7 +148,7 @@ server:bind('PROFILE_UPDATE', function(player, payload)
 	end
 	
 	store:dispatch(player, {
-		type = 'PROFILE_UPDATE',
+		type = "PROFILE_UPDATE",
 		payload = profile,
 	})
 end)
@@ -204,7 +160,7 @@ end)
 	@param string key - name of the table's item
 	@param string value - value to set
 ]]--
-server:bind('PROFILE_SET', function(player, payload)
+server:bind("PROFILE_SET", function(player, payload)
 	if not player then return end
 	
 	local tbl, key, value = payload.tbl, payload.key, payload.value
@@ -217,7 +173,7 @@ server:bind('PROFILE_SET', function(player, payload)
 				elseif tbl and state[player.userId][tbl] ~= nil and state[player.userId][tbl][key] ~= nil then
 					state[player.userId][tbl][key] = value
 				else
-					error('Could not set: ' .. key .. ' to: ' .. value)
+					error("Could not set: " .. key .. " to: " .. value)
 				end
 			end
 			
@@ -226,8 +182,8 @@ server:bind('PROFILE_SET', function(player, payload)
 	end)
 	
 	if success then
-		server:localCall('PROFILE_UPDATE', player, {
-			updatedKey = (tbl and key) and tbl .. '_' .. key or key
+		server:localCall("PROFILE_UPDATE", player, {
+			updatedKey = (tbl and key) and tbl .. "_" .. key or key
 		})
 	end
 end)
@@ -239,15 +195,15 @@ end)
 	@param string key - name of the table's item
 	@param int value - number to add
 ]]--
-server:bind('PROFILE_ADD', function(player, payload)
+server:bind("PROFILE_ADD", function(player, payload)
 	if not player then return end
 	
-	local value = server:localCall('PROFILE_GET', player, {
+	local value = server:localCall("PROFILE_GET", player, {
 		tbl = payload.tbl,
 		key = payload.key
 	}).payload
 	
-	server:localCall('PROFILE_SET', player, {
+	server:localCall("PROFILE_SET", player, {
 		tbl = payload.tbl,
 		key = payload.key,
 		value = payload.value + value
@@ -261,8 +217,8 @@ end)
 	@param string key - name of the table's item
 	@param int value - number to subtract
 ]]--
-server:bind('PROFILE_SUBTRACT', function(player, payload)
-	server:localCall('PROFILE_ADD', player, {
+server:bind("PROFILE_SUBTRACT", function(player, payload)
+	server:localCall("PROFILE_ADD", player, {
 		tbl = payload.tbl,
 		key = payload.key,
 		value = -payload.value
@@ -270,12 +226,12 @@ server:bind('PROFILE_SUBTRACT', function(player, payload)
 end)
 
 --[[
-	@desc save the user's profile to the game's roblox database
+	@desc save the user"s profile to the game"s roblox database
 	@param object player - player
 ]]--
-server:bind('PROFILE_SAVE', function(player)
+server:bind("PROFILE_SAVE", function(player)
 	if profileDB then
-		local profile = server:localCall('PROFILE', player)
+		local profile = server:localCall("PROFILE", player)
 		
 		if not profile then return end
 		
@@ -300,7 +256,7 @@ server:bind('PROFILE_SAVE', function(player)
 			end, 3, 2) -- Attempt to save data 3 times every 2 seconds
 			
 			if success and tries ~= 0 then
-				print('Server - Took ', tries, ' tries to save data for player: ', player.userId)
+				print('Server - Took ', tries, " tries to save data for player: ", player.userId)
 			end
 			
 			if not success then
@@ -315,11 +271,11 @@ end)
 
 
 game.Players.PlayerAdded:Connect(function(player)
-	if server:localCall('ADMIN_CHECK_IF_BANNED', player).payload then
-		return server:localCall('ADMIN_KICK', player, 'You are banned from the game')
+	if server:localCall("ADMIN_CHECK_IF_BANNED", player).payload then
+		return server:localCall("ADMIN_KICK", player, "You are banned from the game")
 	end
 	
-	local isAdmin = server:localCall('ADMIN_CHECK', player).payload
+	local isAdmin = server:localCall("ADMIN_CHECK", player).payload
 	
 	player.Chatted:Connect(function(message)
 		--[[if cfg.events.chatted then
@@ -328,14 +284,14 @@ game.Players.PlayerAdded:Connect(function(player)
 		
 		if not isAdmin then return end
 		
-		server:localCall('ADMIN_SPOKE', player, {
+		server:localCall("ADMIN_SPOKE", player, {
 			message = message
 			--recipient = recipient
 		})
 	end)
 	
 	player.CharacterAdded:Connect(function(character)
-		local humanoid = character:WaitForChild('Humanoid')
+		local humanoid = character:WaitForChild("Humanoid")
 		
 		--[[if cfg.events.spawn then
 			cfg.events.spawn(character)
@@ -350,8 +306,8 @@ game.Players.PlayerAdded:Connect(function(player)
 		if cfg.spawns then
 			local spawn = Util.randomObj(cfg.spawns)
 			
-			if spawn and character:FindFirstChild('Head') then
-				local offset = spawn:FindFirstChild('Offset')
+			if spawn and character:FindFirstChild("Head") then
+				local offset = spawn:FindFirstChild("Offset")
 				
 				if not offset then
 					offset = { X = 8, Z = 8 }
@@ -385,7 +341,7 @@ game.Players.PlayerAdded:Connect(function(player)
 		end, 3, 2) -- Attempt to get data 3 times every 2 seconds
 		
 		if success and tries ~= 0 then
-			print('Server - Took ', tries, ' tries to get data for player: ', player.userId) -- LOG AMOUNT OF TRIES
+			print('Server - Took ', tries, " tries to get data for player: ", player.userId) -- LOG AMOUNT OF TRIES
 		end
 		
 		if not success then
@@ -408,10 +364,10 @@ game.Players.PlayerAdded:Connect(function(player)
 	}))
 	
 	if cfg.leaderboard_stats then
-		local statistics = Util({ class = 'IntValue', Name = 'leaderstats' })
+		local statistics = Util({ class = "IntValue", Name = "leaderstats" })
 		
 		for i, name in pairs(cfg.leaderboardStats) do
-			local leaderstat = Util({ class = 'IntValue', Name = name, Parent = statistics, Value = 0 })
+			local leaderstat = Util({ class = "IntValue", Name = name, Parent = statistics, Value = 0 })
 			
 			for stat, value in pairs(profile.statistics) do
 				if string.lower(name[i]) == string.lower(stat) then
@@ -428,29 +384,25 @@ game.Players.PlayerAdded:Connect(function(player)
 		cfg.events.entered(player)
 	end
 	
-	if cfg.useGA then
-		GameAnalytics:PlayerJoined(player)
-	end
-	
 	if cfg.dev and cfg.debug then
 		print(HTTP:JSONEncode(profile))
 	end
 	
-	server:localCall('PROFILE_UPDATE', player)
+	server:localCall("PROFILE_UPDATE", player)
 	store:dispatch(true, { -- Tell all the clients that a player joined
-		type = 'PLAYER_JOINED',
+		type = "PLAYER_JOINED",
 		payload = profile
 	})
 	
 	coroutine.resume(coroutine.create(function()
 		while player and wait(cfg.save_interval or 120) do
-			server:localCall('PROFILE_SAVE', player)
+			server:localCall("PROFILE_SAVE", player)
 		end
 	end))
 end)
 
 game.Players.PlayerRemoving:Connect(function(player)
-	server:localCall('PROFILE_SAVE', player)
+	server:localCall("PROFILE_SAVE", player)
 	
 	local profiles = profileState:get()
 	
@@ -467,7 +419,7 @@ game.Players.PlayerRemoving:Connect(function(player)
 	end]]
 	
 	store:dispatch(true, { -- Tell all the clients that a player left
-		type = 'PLAYER_LEFT',
+		type = "PLAYER_LEFT",
 		payload = player.userId
 	})
 end)

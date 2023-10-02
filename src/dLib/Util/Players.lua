@@ -1,4 +1,4 @@
-local Players = game:GetService('Players')
+local Players = game:GetService("Players")
 
 local players = {}
 
@@ -47,10 +47,10 @@ players.getUserLevel = function(player)
 end
 
 players.getHumanoid = function(obj)
-	return obj and typeof(obj) == 'Instance' and (
-		(obj:IsA('Player') and obj.Character and obj.Character:FindFirstChild('Humanoid')) or
-		(obj:IsA('Model') and obj:FindFirstChildOfClass('Humanoid')) or
-		(obj:IsA('Humanoid') and obj) or
+	return obj and typeof(obj) == "Instance" and (
+		(obj:IsA("Player") and obj.Character and obj.Character:FindFirstChild("Humanoid")) or
+		(obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid")) or
+		(obj:IsA("Humanoid") and obj) or
 		nil -- Did not find a humanoid object
 	)
 end
