@@ -256,12 +256,12 @@ server:bind("PROFILE_SAVE", function(player)
 			end, 3, 2) -- Attempt to save data 3 times every 2 seconds
 			
 			if success and tries ~= 0 then
-				print('Server - Took ', tries, " tries to save data for player: ", player.userId)
+				print("Server - Took ", tries, " tries to save data for player: ", player.userId)
 			end
 			
 			if not success then
 				profile.dontSave = true
-				print('Server - Could not save data for player: ', player.userId)
+				print("Server - Could not save data for player: ", player.userId)
 			end
 			
 			profile.entity = player
@@ -341,12 +341,12 @@ game.Players.PlayerAdded:Connect(function(player)
 		end, 3, 2) -- Attempt to get data 3 times every 2 seconds
 		
 		if success and tries ~= 0 then
-			print('Server - Took ', tries, " tries to get data for player: ", player.userId) -- LOG AMOUNT OF TRIES
+			print("Server - Took ", tries, " tries to get data for player: ", player.userId) -- LOG AMOUNT OF TRIES
 		end
 		
 		if not success then
 			profile.dontSave = true
-			print('Server - Could not save data for player: ', player.userId) -- LOG INCIDENT
+			print("Server - Could not save data for player: ", player.userId) -- LOG INCIDENT
 		end
 	end
 	

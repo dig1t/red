@@ -16,10 +16,10 @@ local purchases = {
 }
 
 function GamePass.has(userId, passId)
-	assert(userId, 'GamePass.has - Missing user id')
-	assert(passId, 'GamePass.has - Missing game pass id')
+	assert(userId, "GamePass.has - Missing user id")
+	assert(passId, "GamePass.has - Missing game pass id")
 	
-	local key = userId .. '-' .. passId
+	local key = userId .. "-" .. passId
 	
 	if purchases[key] == nil then
 		local success, res = pcall(function()
@@ -38,7 +38,7 @@ function GamePass.has(userId, passId)
 end
 
 function GamePass.offer(player, passId)
-	assert(passId, 'GamePass.offer - Missing game pass id')
+	assert(passId, "GamePass.offer - Missing game pass id")
 	
 	Marketplace:PromptGamePassPurchase(player, passId)
 end
@@ -54,7 +54,7 @@ function GamePass.watch()
 			return
 		end
 		
-		purchases[player.UserId .. '-' .. passId] = true
+		purchases[player.UserId .. "-" .. passId] = true
 		
 		for _, callback in pairs(callbacks) do
 			callback(player, passId)
@@ -63,7 +63,7 @@ function GamePass.watch()
 	
 	connections[#connections + 1] = Players.PlayerRemoving:Connect(function(player)
 		for id, own in pairs(purchases) do
-			if string.sub(id, 1, #tostring(player.UserId) + 1) == player.UserId .. '-' then
+			if string.sub(id, 1, #tostring(player.UserId) + 1) == player.UserId .. "-" then
 				-- Remove cache record in case player purchased or deleted
 				-- the game pass while they were not in the server
 				purchases[id] = nil

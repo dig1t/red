@@ -1,7 +1,7 @@
 local date = {}
 
 date.unix = function()
-	return string.gsub(tostring(os.clock()), '%.', "")
+	return string.gsub(tostring(os.clock()), "%.", "")
 end
 
 date.timeAgo = function(timestamp)
@@ -33,7 +33,7 @@ date.unixToClockFormat = function(timestamp) -- TODO: add support for hours and 
 	local seconds = tostring(date.getSeconds(timestamp))
 	
 	return string.format(
-		'%s:%s',
+		"%s:%s",
 		string.len(minutes) == 1 and ("0" .. minutes) or minutes,
 		string.len(seconds) == 1 and ("0" .. seconds) or seconds
 	)

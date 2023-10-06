@@ -195,7 +195,7 @@ tbl.tableRemove = function(obj, removeTest)
 end
 
 tbl.modelToTable = function(model)
-	assert(model, 'tbl.modelToTable - Missing model object')
+	assert(model, "tbl.modelToTable - Missing model object")
 	
 	local obj = {}
 	
@@ -222,7 +222,7 @@ local valueClasses = {
 }
 
 tbl.tableLength = function(obj)
-	assert(obj, 'tbl.tableLength - Missing object')
+	assert(obj, "tbl.tableLength - Missing object")
 	
 	local res = 0
 	
@@ -234,8 +234,8 @@ tbl.tableLength = function(obj)
 end
 
 tbl.tableRandomIndex = function(obj)
-	assert(obj, 'tbl.tableRandomIndex - Missing object')
-	assert(typeof(obj) == "table" or typeof(obj) == "Instance", 'tbl.tableRandomIndex - Cannot index ' .. typeof(obj))
+	assert(obj, "tbl.tableRandomIndex - Missing object")
+	assert(typeof(obj) == "table" or typeof(obj) == "Instance", "tbl.tableRandomIndex - Cannot index " .. typeof(obj))
 	
 	obj = typeof(obj) == "Instance" and obj:GetChildren() or obj
 	
@@ -250,8 +250,8 @@ tbl.tableRandomIndex = function(obj)
 end
 
 tbl.indexOf = function(obj, value)
-	assert(obj, 'tbl.indexOf - Missing object')
-	assert(typeof(obj) == "table", 'tbl.indexOf - Cannot index ' .. typeof(obj))
+	assert(obj, "tbl.indexOf - Missing object")
+	assert(typeof(obj) == "table", "tbl.indexOf - Cannot index " .. typeof(obj))
 	
 	for k, v in pairs(obj) do
 		if v == value then
@@ -263,8 +263,8 @@ tbl.indexOf = function(obj, value)
 end
 
 tbl.tableRandom = function(obj)
-	assert(obj, 'tbl.tableRandom - Missing object')
-	assert(typeof(obj) == "table" or typeof(obj) == "Instance", 'tbl.tableRandomIndex - Cannot index ' .. typeof(obj))
+	assert(obj, "tbl.tableRandom - Missing object")
+	assert(typeof(obj) == "table" or typeof(obj) == "Instance", "tbl.tableRandomIndex - Cannot index " .. typeof(obj))
 	
 	obj = typeof(obj) == "Instance" and obj:GetChildren() or obj
 	

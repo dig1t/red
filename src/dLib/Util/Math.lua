@@ -64,7 +64,7 @@ mathMethods.shortenNumber = function(number, minimumTier)
 	local suffix = si[tier] or si[#si] -- Get tier or use highest tier if # too high
 	
 	return (mathMethods.formatInt(tonumber(
-		string.format('%.2f', number / 10 ^ (3 * tier))
+		string.format("%.2f", number / 10 ^ (3 * tier))
 	)) * negative) .. suffix
 end
 
@@ -84,8 +84,8 @@ mathMethods.getDistance = function(a, b)
 	a = mathMethods.getVector3(a)
 	b = mathMethods.getVector3(b)
 	
-	assert(a, 'Util.getDistance - Parameter 1 is missing a Vector3 value or an Instance with a Vector3 Position')
-	assert(2, 'Util.getDistance - Parameter 2 is missing a Vector3 value or an Instance with a Vector3 Position')
+	assert(a, "Util.getDistance - Parameter 1 is missing a Vector3 value or an Instance with a Vector3 Position")
+	assert(2, "Util.getDistance - Parameter 2 is missing a Vector3 value or an Instance with a Vector3 Position")
 	
 	return (a - b).Magnitude
 end

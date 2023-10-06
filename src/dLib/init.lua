@@ -10,7 +10,7 @@ local loadedModules = {
 }
 
 local function import(path)
-	assert(typeof(path) == "string", 'dLib.import - Path is not a string')
+	assert(typeof(path) == "string", "dLib.import - Path is not a string")
 
 	-- Return module if it was already used
 	if loadedModules[path] then
@@ -19,10 +19,10 @@ local function import(path)
 
 	local modulePath = Util.treePath(script, path, "/")
 
-	assert(modulePath, 'dLib.import - Missing module ' .. path)
+	assert(modulePath, "dLib.import - Missing module " .. path)
 	--[[assert(
 		modulePath:IsA("ModuleScript"),
-		string.format('dLib.import - %s is not a ModuleScript instance', path)
+		string.format("dLib.import - %s is not a ModuleScript instance", path)
 	)]]
 
 	if modulePath and modulePath:IsA("ModuleScript") then
@@ -31,7 +31,7 @@ local function import(path)
 		end)
 
 		if not success then
-			error('dLib.import - ' .. res)
+			error("dLib.import - " .. res)
 		end
 
 		loadedModules[path] = res

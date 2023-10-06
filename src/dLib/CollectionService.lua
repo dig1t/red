@@ -26,7 +26,7 @@ function methods:destroy()
 end
 
 function lib.watch(tagId)
-	assert(tagId, 'CollectionService.watch - Missing tag id')
+	assert(tagId, "CollectionService.watch - Missing tag id")
 	
 	local self = setmetatable({}, methods)
 	

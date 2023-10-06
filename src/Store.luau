@@ -33,7 +33,7 @@ function Store:dispatch(...): nil
 		action.success = not action.err
 		
 		if not action.success and not action.err and action.type then
-			action.err = action.type .. ' - Error occured'
+			action.err = action.type .. " - Error occured"
 		end
 	end
 	
@@ -61,7 +61,7 @@ function Store:dispatch(...): nil
 		elseif fireToAll then
 			remotes.Client:FireAllClients(action)
 		elseif self.error then
-			warn('Store - could not dispatch action' .. action.type) -- Convert to error handler (?)
+			warn("Store - could not dispatch action" .. action.type) -- Convert to error handler (?)
 		end
 	end
 end

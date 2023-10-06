@@ -50,8 +50,8 @@ end
 so it can later be called by client-side code.
 ]]
 function methods:bind(type, fn)
-	assert(typeof(type) == "string", 'Weapon:bind - No action type given')
-	assert(typeof(fn) == "function", 'Weapon:bind - No function given')
+	assert(typeof(type) == "string", "Weapon:bind - No action type given")
+	assert(typeof(fn) == "function", "Weapon:bind - No function given")
 	
 	self.events[type] = fn
 end
@@ -195,11 +195,11 @@ end
 -- @desc Saves a reference of the projectile that will be later shot
 ]]
 function methods:setProjectileReference(object)
-	assert(object, 'WeaponServer:setProjectileReference - Missing reference object')
+	assert(object, "WeaponServer:setProjectileReference - Missing reference object")
 	if typeof(object) == "Instance" then
 		--[[assert(
 			object:IsDescendantOf(ReplicatedStorage),
-			'WeaponServer:setProjectileReference - Object must be a descendant of ReplicatedStorage'
+			"WeaponServer:setProjectileReference - Object must be a descendant of ReplicatedStorage"
 		)]]
 	end
 	
@@ -274,8 +274,8 @@ end
 
 -- ProjectilePassThrough
 function methods:shoot(data)
-	assert(data and typeof(data) == "table", 'WeaponServer:shoot - Missing data table')
-	assert(data.callback, 'WeaponServer:shoot - Missing callback')
+	assert(data and typeof(data) == "table", "WeaponServer:shoot - Missing data table")
+	assert(data.callback, "WeaponServer:shoot - Missing callback")
 	
 	data.origin = (
 		self.localPlayer.Character and self.localPlayer.Character.PrimaryPart and self.localPlayer.Character.PrimaryPart.CFrame
@@ -288,7 +288,7 @@ function methods:shoot(data)
 	local start = os.clock() -- When the projectile first started shooting
 	
 	if self.config.hitscan then
-		assert(data.target, 'WeaponServer:shoot - Missing target')
+		assert(data.target, "WeaponServer:shoot - Missing target")
 		
 		self.raycastFilter.FilterDescendantsInstances = Util.extend(
 			{ self.localPlayer.Character },
@@ -398,7 +398,7 @@ end
 -- End projectile functions
 
 function methods:handleTouched(fn)
-	assert(fn, 'Weapon:handleTouched - No callback function provided')
+	assert(fn, "Weapon:handleTouched - No callback function provided")
 	
 	if self.connections.handleListener then
 		self.connection.handleListener:Disconnect()
@@ -424,7 +424,7 @@ function methods:destroy()
 end
 
 function WeaponServer.new(config)
-	assert(config.tool and typeof(config.tool) == "Instance" and config.tool:IsA("Tool"), 'WeaponServer.new - Missing tool object from config')
+	assert(config.tool and typeof(config.tool) == "Instance" and config.tool:IsA("Tool"), "WeaponServer.new - Missing tool object from config")
 	
 	local self = setmetatable({}, methods)
 	
@@ -453,7 +453,7 @@ function WeaponServer.new(config)
 			self.handle = toolModel:FindFirstChild("Handle")
 			self.handle.Parent = config.tool
 			
-			assert(self.handle, 'WeaponServer.new - Tool model must have a handle')
+			assert(self.handle, "WeaponServer.new - Tool model must have a handle")
 			
 			self.modelParts = Util.map(toolModel:GetDescendants(), function(obj)
 				if obj:IsA("BasePart") then
@@ -468,7 +468,7 @@ function WeaponServer.new(config)
 		end
 	end
 	
-	assert(self.handle, 'WeaponServer.new - Missing tool handle')
+	assert(self.handle, "WeaponServer.new - Missing tool handle")
 	
 	self.handle.Anchored = false
 	self.handle.CanCollide = false

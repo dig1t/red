@@ -186,7 +186,7 @@ function Server:init()
 		-- If the action's method is "get" fire it back
 		-- to the sender
 		if action.method and action.method == "get" then
-			assert(typeof(res) == "table", action.type .. ' - Cannot return a ' .. typeof(res) .. " type to a client.")
+			assert(typeof(res) == "table", action.type .. " - Cannot return a " .. typeof(res) .. " type to a client.")
 			
 			res.uid = action.uid
 			
@@ -217,7 +217,7 @@ function Server:init()
 		-- If the action's method is "get" fire it back
 		-- to the sender
 		if action.method and action.method == "get" then
-			assert(typeof(res) == "table", action.type .. ' - Cannot return a ' .. typeof(res) .. " type to a client. Only tables can be returned.")
+			assert(typeof(res) == "table", action.type .. " - Cannot return a " .. typeof(res) .. " type to a client. Only tables can be returned.")
 			
 			res.uid = action.uid
 			

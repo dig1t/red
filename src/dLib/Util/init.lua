@@ -161,8 +161,8 @@ Util.printTable = function(tbl)
 end
 
 Util.numberSequence = function(data)
-	assert(data and typeof(data) == "table", 'Util.numberSequence - Missing data table')
-	assert(#data > 1, 'Util.numberSequence - Must have at least 2 keypoints')
+	assert(data and typeof(data) == "table", "Util.numberSequence - Missing data table")
+	assert(#data > 1, "Util.numberSequence - Must have at least 2 keypoints")
 	
 	local keypoints = Util.map(data, function(keypoint)
 		if #keypoint == 2 then
@@ -170,7 +170,7 @@ Util.numberSequence = function(data)
 		end
 	end)
 	
-	assert(#keypoints > 1, 'Util.numberSequence - Must have at least 2 keypoints')
+	assert(#keypoints > 1, "Util.numberSequence - Must have at least 2 keypoints")
 	
 	return NumberSequence.new(keypoints)
 end
@@ -230,7 +230,7 @@ Util.weld = function(part, attachTo, offset)
 end
 
 Util.clearWelds = function(instance)
-	assert(typeof(instance) == "Instance", 'Util.clearWelds - First argument must be an instance')
+	assert(typeof(instance) == "Instance", "Util.clearWelds - First argument must be an instance")
 	
 	for _, obj in pairs(instance:GetDescendants()) do
 		if obj:IsA("WeldConstraint") or obj:IsA("Weld") then
@@ -289,8 +289,8 @@ end
 -- Events
 
 Util.waitForChild = function(parent, name)
-	assert(parent and typeof(parent) == "Instance", 'Util.waitForChild - Parent must be an instance')
-	assert(name, 'Util.waitForChild - Missing child name')
+	assert(parent and typeof(parent) == "Instance", "Util.waitForChild - Parent must be an instance")
+	assert(name, "Util.waitForChild - Missing child name")
 	
 	if parent:FindFirstChild(name) then
 		return parent[name]
