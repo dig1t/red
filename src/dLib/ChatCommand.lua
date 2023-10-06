@@ -130,8 +130,8 @@ function methods:process()
 end
 
 function ChatCommand.new(data)
-	assert(data.player, 'ChatCommand.new - Player missing')
-	assert(typeof(data.text) == "string", 'ChatCommand.new - Text argument must be a string')
+	assert(data.player, "ChatCommand.new - Player missing")
+	assert(typeof(data.text) == "string", "ChatCommand.new - Text argument must be a string")
 	
 	local self = setmetatable({}, methods)
 	

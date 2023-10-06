@@ -59,7 +59,7 @@ Promise.status = {
 function methods:resolve(...)
 	if self.status ~= Promise.status.pending then
 		warn(string.format(
-			'Cannot resolve a promise %s',
+			"Cannot resolve a promise %s",
 			self.status == Promise.status.rejected and "after rejection" or "more than once"
 		))
 		
@@ -92,7 +92,7 @@ end
 function methods:reject(...)
 	if self.status ~= Promise.status.pending then
 		warn(string.format(
-			'Cannot reject a promise %s',
+			"Cannot reject a promise %s",
 			self.status == Promise.status.fulfilled and "after fulfillment" or "more than once"
 		))
 		

@@ -47,7 +47,7 @@ end
 
 module.hello = function(player, payload)
 	print(string.format(
-		'%s said %s.',
+		"%s said %s.",
 		player.Name,
 		payload and payload.message or "hello"
 	))

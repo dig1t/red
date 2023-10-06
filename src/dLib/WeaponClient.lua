@@ -95,10 +95,10 @@ function methods:setInput(inputName, data)
 	assert(inputName, "Missing input name")
 	assert(typeof(data) == "table", "Missing data table")
 	assert(Util.tableLength(data) > 0, "No events to watch")
-	assert(not self._inputData[inputName], string.format('Input %s already exists', inputName))
+	assert(not self._inputData[inputName], string.format("Input %s already exists", inputName))
 	
 	for eventName, condition in pairs(data) do
-		assert(UserInput[eventName], string.format('%s is not a valid UserInputType', eventName))
+		assert(UserInput[eventName], string.format("%s is not a valid UserInputType", eventName))
 		
 		-- Start listing to eventName (InputBegan, InputEnded, etc.)
 		if self.equipped and not self._connections[eventName] then
@@ -152,7 +152,7 @@ function methods:unwatchInput(inputName)
 end
 
 function methods:setInputCooldown(inputName, cooldownTime)
-	assert(self._inputData[inputName], string.format('Input %s does not exist', inputName))
+	assert(self._inputData[inputName], string.format("Input %s does not exist", inputName))
 	
 	self._inputData[inputName].cooldownTime = cooldownTime
 end
@@ -285,14 +285,14 @@ function WeaponClient.getModelParts(tool)
 end
 
 function WeaponClient.getProjectile(data)
-	assert(data and typeof(data) == "table", 'WeaponClient.getProjectile - Missing data table')
-	assert(data.handle, 'WeaponClient.getProjectile - Missing weapon handle')
+	assert(data and typeof(data) == "table", "WeaponClient.getProjectile - Missing data table")
+	assert(data.handle, "WeaponClient.getProjectile - Missing weapon handle")
 	
 	local modelParts = data.modelParts or (data.tool and WeaponClient.getModelParts(data.tool)) or {}
 	local projectile
 	
 	if not data.useModelAsProjectile then
-		assert(data.projectileReference, 'WeaponClient.fireTracer - Missing projectile reference')
+		assert(data.projectileReference, "WeaponClient.fireTracer - Missing projectile reference")
 		
 		projectile = data.projectileReference:Clone()
 	elseif #modelParts == 0 then
@@ -319,7 +319,7 @@ end
 function methods:fireTracer(data)
 	assert(
 		data and typeof(data) == "table",
-		'WeaponClient.fireTracer - Missing data'
+		"WeaponClient.fireTracer - Missing data"
 	)
 	
 	if not self.localPlayer.Character and data.localTracer then
@@ -329,7 +329,7 @@ function methods:fireTracer(data)
 	data.velocity = data.velocity or 16
 	
 	if not data.origin then
-		warn('WeaponClient:fireTracer - Missing origin')
+		warn("WeaponClient:fireTracer - Missing origin")
 		return
 	end
 	
@@ -346,7 +346,7 @@ function methods:fireTracer(data)
 	
 	if newTracer:IsA("Model") then
 		if not newTracer.PrimaryPart then
-			warn('WeaponClient.fireTracer - Projectile model must have a PrimaryPart defined')
+			warn("WeaponClient.fireTracer - Projectile model must have a PrimaryPart defined")
 			return
 		end
 		
@@ -427,9 +427,9 @@ function WeaponClient.watch()
 	self.remote = Util.waitForChild(ReplicatedStorage, "WeaponRemote")
 	
 	self.remote.OnClientEvent:Connect(function(action)
-		assert(action and typeof(action) == "table", 'WeaponClient.watch - Missing action')
-		assert(action.type, 'WeaponClient.watch - Missing action type')
-		assert(action.payload, 'WeaponClient.watch - Missing action payload')
+		assert(action and typeof(action) == "table", "WeaponClient.watch - Missing action")
+		assert(action.type, "WeaponClient.watch - Missing action type")
+		assert(action.payload, "WeaponClient.watch - Missing action payload")
 		
 		if action.type == "WEAPON_TRACER" then
 			self:fireTracer(action.payload)
