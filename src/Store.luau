@@ -139,7 +139,7 @@ function Store:get(action: Action): any
 	until res ~= nil or responseReceived or os.clock() - start >= timeout
 	
 	if not responseReceived then
-		promise:reject('Timed out while waiting for action: "" .. action.type .. ""')
+		promise:reject("Timed out while waiting for action: \" .. action.type .. \"")
 	end
 	
 	return res
@@ -201,7 +201,7 @@ function Store:subscribe(fn: () -> nil): SubscriptionId
 end
 
 function Store:unsubscribe(id: SubscriptionId): nil
-	assert(self._subscribers[id], 'Store:unsubscribe() - Event listener id does not exist')
+	assert(self._subscribers[id], "Store:unsubscribe() - Event listener id does not exist")
 	
 	self._subscribers[id] = nil
 	

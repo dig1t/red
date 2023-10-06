@@ -2,8 +2,8 @@ math.randomseed(os.time() * 1e4)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
-local DataStore = game:GetService("DataStoreService")
-local HTTP = game:GetService("HttpService")
+local DataStoreService = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
 
 local red = require(ReplicatedStorage.red)
 local dLib = require(ReplicatedStorage.red.dLib)
@@ -20,7 +20,7 @@ local profileDB
 local profileState = red.State.new()
 
 if not dev and cfg.saveProfiles and cfg.profileStoreName then
-	profileDB = DataStore:GetDataStore(cfg.profileStoreName)
+	profileDB = DataStoreService:GetDataStore(cfg.profileStoreName)
 end
 
 function init()
@@ -250,7 +250,7 @@ server:bind("PROFILE_SAVE", function(player)
 					if profile._id == prevData._id then
 						profile._id = Util.randomString(8) -- set a new 
 						
-						return HTTP:JSONEncode(profile) -- Encode profile data as JSON
+						return HttpService:JSONEncode(profile) -- Encode profile data as JSON
 					end
 				end)
 			end, 3, 2) -- Attempt to save data 3 times every 2 seconds
@@ -336,7 +336,7 @@ game.Players.PlayerAdded:Connect(function(player)
 			local fetch = profileDB:GetAsync(player.userId)
 			
 			if fetch then
-				profile = HTTP:JSONDecode(fetch)
+				profile = HttpService:JSONDecode(fetch)
 			end
 		end, 3, 2) -- Attempt to get data 3 times every 2 seconds
 		
@@ -385,7 +385,7 @@ game.Players.PlayerAdded:Connect(function(player)
 	end
 	
 	if cfg.dev and cfg.debug then
-		print(HTTP:JSONEncode(profile))
+		print(HttpService:JSONEncode(profile))
 	end
 	
 	server:localCall("PROFILE_UPDATE", player)

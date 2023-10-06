@@ -147,7 +147,7 @@ store:dispatch({ -- Called from the server
 store:dispatch(true, {
 	type = "UI_NOTIFICATION",
 	payload = {
-		text = 'Hello World!'
+		text = "Hello World!"
 	}
 })
 

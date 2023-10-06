@@ -4,7 +4,7 @@
 -- @desc Game pass library that caches results and watches for pass purchases.
 ]]
 
-local Marketplace = game:GetService("MarketplaceService")
+local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 
 local GamePass = {}
@@ -23,7 +23,7 @@ function GamePass.has(userId, passId)
 	
 	if purchases[key] == nil then
 		local success, res = pcall(function()
-			return Marketplace:UserOwnsGamePassAsync(userId, passId)
+			return MarketplaceService:UserOwnsGamePassAsync(userId, passId)
 		end)
 		
 		if success then
@@ -40,7 +40,7 @@ end
 function GamePass.offer(player, passId)
 	assert(passId, "GamePass.offer - Missing game pass id")
 	
-	Marketplace:PromptGamePassPurchase(player, passId)
+	MarketplaceService:PromptGamePassPurchase(player, passId)
 end
 
 -- This function fixes the caching issue with UserOwnsGamePassAsync
@@ -49,7 +49,7 @@ end
 function GamePass.watch()
 	GamePass.unwatch() -- Prevent accidental multiple watchers
 	
-	connections[#connections + 1] = Marketplace.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
+	connections[#connections + 1] = MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
 		if not purchased then
 			return
 		end

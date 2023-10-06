@@ -6,7 +6,7 @@
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInput = game:GetService("UserInputService")
+local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -98,11 +98,11 @@ function methods:setInput(inputName, data)
 	assert(not self._inputData[inputName], string.format("Input %s already exists", inputName))
 	
 	for eventName, condition in pairs(data) do
-		assert(UserInput[eventName], string.format("%s is not a valid UserInputType", eventName))
+		assert(UserInputService[eventName], string.format("%s is not a valid UserInputType", eventName))
 		
 		-- Start listing to eventName (InputBegan, InputEnded, etc.)
 		if self.equipped and not self._connections[eventName] then
-			self._connections[eventName] = UserInput[eventName]:Connect(function(...)
+			self._connections[eventName] = UserInputService[eventName]:Connect(function(...)
 				self:_onInputEvent(eventName, ...)
 			end)
 		end
@@ -505,7 +505,7 @@ function WeaponClient.new(config)
 			for eventName, condition in pairs(data.listeners) do
 				-- Start listing to eventName (InputBegan, InputEnded, etc.)
 				if not self._connections[eventName] then
-					self._connections[eventName] = UserInput[eventName]:Connect(function(...)
+					self._connections[eventName] = UserInputService[eventName]:Connect(function(...)
 						self:_onInputEvent(eventName, ...)
 					end)
 				end
