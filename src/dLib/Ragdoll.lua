@@ -3,7 +3,7 @@
 -- @author Digitalscape
 ]]
 
-local Physics = game:GetService("PhysicsService")
+local PhysicsService = game:GetService("PhysicsService")
 local Workspace = game:GetService("Workspace")
 local Debris = game:GetService("Debris")
 
@@ -20,7 +20,7 @@ if not RAGDOLL_COLLIDABLE then
 	local playerGroupExists
 	local ragdollGroupExists
 	
-	for _, group in pairs(Physics:GetCollisionGroups()) do
+	for _, group in pairs(PhysicsService:GetCollisionGroups()) do
 		if group.name == PLAYER_COLLISION_GROUP_NAME then
 			playerGroupExists = true
 		elseif group.name == RAGDOLL_COLLISION_GROUP_NAME then
@@ -29,16 +29,16 @@ if not RAGDOLL_COLLIDABLE then
 	end
 	
 	if not playerGroupExists then
-		Physics:CreateCollisionGroup(PLAYER_COLLISION_GROUP_NAME)
+		PhysicsService:CreateCollisionGroup(PLAYER_COLLISION_GROUP_NAME)
 	end
 	
 	if not ragdollGroupExists then
-		Physics:CreateCollisionGroup(RAGDOLL_COLLISION_GROUP_NAME)
+		PhysicsService:CreateCollisionGroup(RAGDOLL_COLLISION_GROUP_NAME)
 	end
 	
 	if not playerGroupExists or not ragdollGroupExists then
 		-- Disable collisions with ragdoll characters
-		Physics:CollisionGroupSetCollidable(PLAYER_COLLISION_GROUP_NAME, RAGDOLL_COLLISION_GROUP_NAME, false)
+		PhysicsService:CollisionGroupSetCollidable(PLAYER_COLLISION_GROUP_NAME, RAGDOLL_COLLISION_GROUP_NAME, false)
 	end
 end
 
@@ -58,7 +58,7 @@ function Ragdoll.setup(character) -- Sets up the player's collision group
 	if not RAGDOLL_COLLIDABLE then
 		for _, obj in pairs(character:GetDescendants()) do
 			if obj:IsA("BasePart") then
-				Physics:SetPartCollisionGroup(obj, PLAYER_COLLISION_GROUP_NAME)
+				PhysicsService:SetPartCollisionGroup(obj, PLAYER_COLLISION_GROUP_NAME)
 			end
 		end
 	end
@@ -111,7 +111,7 @@ function Ragdoll.create(character)
 			obj.CanCollide = true
 			
 			if not RAGDOLL_COLLIDABLE then
-				Physics:SetPartCollisionGroup(obj, RAGDOLL_COLLISION_GROUP_NAME)
+				PhysicsService:SetPartCollisionGroup(obj, RAGDOLL_COLLISION_GROUP_NAME)
 			end
 		elseif obj:IsA("Script") then
 			obj:Destroy()

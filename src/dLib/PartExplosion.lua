@@ -5,7 +5,7 @@
 ]]
 
 local Workspace = game:GetService("Workspace")
-local Physics = game:GetService("PhysicsService")
+local PhysicsService = game:GetService("PhysicsService")
 
 local dLib = require(script.Parent)
 local Util = dLib.import("Util")
@@ -22,7 +22,7 @@ if not COLLIDABLE then
 	local playerGroupExists
 	local propGroupExists
 	
-	for _, group in pairs(Physics:GetCollisionGroups()) do
+	for _, group in pairs(PhysicsService:GetCollisionGroups()) do
 		if group.name == PLAYER_COLLISION_GROUP_NAME then
 			playerGroupExists = true
 		elseif group.name == PROPS_COLLISION_GROUP_NAME then
@@ -31,16 +31,16 @@ if not COLLIDABLE then
 	end
 	
 	if not playerGroupExists then
-		Physics:CreateCollisionGroup(PLAYER_COLLISION_GROUP_NAME)
+		PhysicsService:CreateCollisionGroup(PLAYER_COLLISION_GROUP_NAME)
 	end
 	
 	if not propGroupExists then
-		Physics:CreateCollisionGroup(PROPS_COLLISION_GROUP_NAME)
+		PhysicsService:CreateCollisionGroup(PROPS_COLLISION_GROUP_NAME)
 	end
 	
 	if not playerGroupExists or not propGroupExists then
 		-- Disable collisions with ragdoll characters
-		Physics:CollisionGroupSetCollidable(
+		PhysicsService:CollisionGroupSetCollidable(
 			PLAYER_COLLISION_GROUP_NAME,
 			PROPS_COLLISION_GROUP_NAME,
 			false
@@ -56,7 +56,7 @@ function methods:_breakPart(part)
 		
 		if not COLLIDABLE then
 			-- Disable player collision
-			Physics:SetPartCollisionGroup(fragment, PROPS_COLLISION_GROUP_NAME)
+			PhysicsService:SetPartCollisionGroup(fragment, PROPS_COLLISION_GROUP_NAME)
 		end
 		
 		fragment:ClearAllChildren() -- Remove welds, effects, etc.
@@ -128,7 +128,7 @@ end
 	}
 ]]
 return function(part, config)
-	assert(typeof(part) == "Instance" and part:IsA("BasePart") or typeof(part) == "table", 'Missing part(s) to break')
+	assert(typeof(part) == "Instance" and part:IsA("BasePart") or typeof(part) == "table", "Missing part(s) to break")
 	
 	local self = setmetatable({}, methods)
 	

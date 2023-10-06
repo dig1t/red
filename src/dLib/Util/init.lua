@@ -176,7 +176,7 @@ Util.numberSequence = function(data)
 end
 
 -- Calls the given function until it successfully runs
--- Used for retrieving from a DataStore or GET/POST requests
+-- Used for retrieving from a data store or GET/POST requests
 Util.attempt = function(fn, maxTries, yield)
 	local res
 	local successful = false
