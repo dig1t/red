@@ -1,8 +1,8 @@
 {
   "name": "red-library",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "description": "",
-  "main": "index.js",
+  "main": "src/init.luau",
   "scripts": {
     "build:rojo": "rojo build -o red.rbxl dev.project.json",
     "build": "npm run build:rojo",
