@@ -23,7 +23,7 @@ end
 return module
 ]]
 
-local dLib = require(script.Parent.dLib)
+local dLib = require(script.Parent.Parent.dLib)
 local Util = dLib.import("Util")
 
 local State = {}
