@@ -7,7 +7,7 @@
       "$className": "ReplicatedStorage",
 
       "Packages": {
-        "$className": "Folder",
+        "$path": "src/Packages",
 
         "red": {
           "$path": "src"
