@@ -235,6 +235,8 @@ function Server:init()
 			remotes.Server:Fire(res)
 		end
 	end)
+	
+	self.started = true
 end
 
 return Server
