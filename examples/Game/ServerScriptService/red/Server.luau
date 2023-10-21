@@ -24,7 +24,7 @@ if not dev and cfg.saveProfiles and cfg.profileStoreName then
 end
 
 function init()
-	server:loadModules(script:GetChildren())
+	server:loadServices(script:GetChildren())
 	
 	server:init()
 end
@@ -129,7 +129,7 @@ server:bind("PROFILE_UPDATE", function(player, payload)
 	
 	profile.updatedKey = payload and payload.updatedKey
 	
-	if server.modules.level and profile.updatedKey == "statistics_xp" then
+	if server.services.level and profile.updatedKey == "statistics_xp" then
 		local levelOverview = server:localCall("LEVEL_OVERVIEW", player)
 		
 		profile.statistics.level = levelOverview.payload.level
@@ -326,7 +326,7 @@ game.Players.PlayerAdded:Connect(function(player)
 	-- profile setup
 	local profile = cfg.defaultProfile(player)
 	
-	if server.modules.level then
+	if server.services.level then
 		profile.statistics.xp = 0
 		profile.statistics.level = 1 -- level starts at 1
 	end
