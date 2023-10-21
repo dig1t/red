@@ -1,4 +1,26 @@
 --[[
+-- red Controller
+-- @desc A Controller is a class that is used to manage different features of the game.
+-- it runs separately on both the client and server.
+-- @author dig1t
+
+-- Controller methods
+-- @method init: () -> nil - Called when the controller is initialized
+-- @method subscribe: (action: redTypes.Action) -> nil - Called when a red action is dispatched
+-- @method stepped: (deltaTime: number) -> nil - Called every frame
+-- @method destroy: () -> nil - Destroys the controller
+
+-- Controller config
+-- @param name: string - The name of the controller
+-- @param init: () -> nil - Called when the controller is initialized
+-- @param subscribe: (action: redTypes.Action) -> nil - Called when a red action is dispatched
+-- @param stepped: (deltaTime: number) -> nil - Called every frame
+
+-- Controller functions
+-- @function Controller.new: (config: redTypes.ControllerConfig) -> redTypes.ControllerType - Creates a new controller
+-- @function Controller.get: (name: string) -> redTypes.ControllerType - Gets a controller by name
+-- @function Controller.addControllerModules: (_controllers: Instance | { ModuleScript }) -> nil - Adds controllers from a folder or table
+
 -- Usage example
 
 local controller = red.Controller.new({
@@ -9,7 +31,8 @@ controller:init(function()
 	print("init")
 end)
 
-controller:redSubscribe(function(action)
+-- You can subscribe to red store to listen for actions
+controller:subscribe(function(action)
 	print(action.type)
 end)
 
@@ -34,14 +57,13 @@ local store = Store.new()
 
 local controllers: { [string]: redTypes.ControllerType } = {}
 local storeSubscriptions: { [number]: string } = {}
-local initiated: boolean = false
 
 store:subscribe(function(action)
 	for _, controllerId: string in pairs(storeSubscriptions) do
 		local controller: redTypes.ControllerType = controllers[controllerId]
 		
-		if controller and controller.redSubscribe then
-			controller:redSubscribe(action)
+		if controller and controller.subscribe then
+			controller:subscribe(action)
 		end
 	end
 end)
@@ -66,10 +88,10 @@ function Controller.new(config: redTypes.ControllerConfig): redTypes.ControllerT
 		assert(typeof(config.init) == "function", "Expected config.init to be a function")
 	end
 	
-	if config.redSubscribe then
+	if config.subscribe then
 		assert(
-			typeof(config.redSubscribe) == "function",
-			"Expected config.redSubscribe to be a function"
+			typeof(config.subscribe) == "function",
+			"Expected config.subscribe to be a function"
 		)
 	end
 	
@@ -107,21 +129,25 @@ function Controller.addControllerModules(_controllers: Instance | { ModuleScript
 			
 			local newController: redTypes.ControllerType = setmetatable({}, controller)
 			
+			if newController.init then
+				newController:init()
+			end
+			
+			if newController.subscribe then
+				storeSubscriptions[#storeSubscriptions + 1] = newController.controllerId
+			end
+			
 			controllers[newController.controllerId] = newController
 		end
 	end
 end
 
-function Controller.initControllers()
-	for _, controller: redTypes.ControllerType in pairs(controllers) do
-		if controller.init then
-			controller:init()
-		end
-		
-		if controller.redSubscribe then
-			storeSubscriptions[#storeSubscriptions + 1] = controller.controllerId
-		end
+function Controller.get(name: string): redTypes.ControllerType
+	if not controllers[name] then
+		warn("Controller with name " .. name .. " does not exist")
 	end
+	
+	return controllers[name]
 end
 
 return Controller
