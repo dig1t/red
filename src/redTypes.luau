@@ -54,7 +54,7 @@ export type ControllerConfig = {
 export type ControllerType = {
 	name: string;
 	init: (self: ControllerType) -> nil;
-	redSubscribe: (self: ControllerType, callback: (action: any) -> nil) -> nil;
+	subscribe: (self: ControllerType, callback: (action: any) -> nil) -> nil;
 	redController: boolean;
 	-- stepped: (self: ControllerType, callback: (deltaTime: number) -> nil) -> nil;
 }
