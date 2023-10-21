@@ -1,7 +1,7 @@
 --[[
--- red Controller
+-- @name Controller
 -- @desc A Controller is a class that is used to manage different features of the game.
--- it runs separately on both the client and server.
+-- It runs separately on both the client and server.
 -- @author dig1t
 
 -- Controller methods
@@ -19,7 +19,8 @@
 -- Controller functions
 -- @function Controller.new: (config: redTypes.ControllerConfig) -> redTypes.ControllerType - Creates a new controller
 -- @function Controller.get: (name: string) -> redTypes.ControllerType - Gets a controller by name
--- @function Controller.addControllerModules: (_controllers: Instance | { ModuleScript }) -> nil - Adds controllers from a folder or table
+-- @function Controller.addModules: (_controllers: Instance | { ModuleScript }) -> nil - Adds controller ModuleScripts from a folder or table
+-- @function Controller.start: () -> nil - Calls the ready method on all controllers
 
 -- Usage example
 
@@ -95,13 +96,23 @@ function Controller.new(config: redTypes.ControllerConfig): redTypes.ControllerT
 		)
 	end
 	
-	local self = setmetatable({
+	local newController = setmetatable({
 		name = config.name;
 		controllerId = Util.randomString();
 		redController = true;
 	}, { __index = Controller })
 	
-	return self
+	if newController.init then
+		newController:init()
+	end
+	
+	if newController.subscribe then
+		storeSubscriptions[#storeSubscriptions + 1] = newController.controllerId
+	end
+	
+	controllers[newController.controllerId] = newController
+	
+	return newController
 end
 
 function Controller:destroy()
@@ -109,35 +120,37 @@ function Controller:destroy()
 	storeSubscriptions[self.controllerId] = nil
 end
 
-function Controller.addControllerModules(_controllers: Instance | { ModuleScript })
-	_controllers = typeof(_controllers) == "Instance" and _controllers:GetChildren() or _controllers
+-- Setting suffix to true will make this function add ALL modules inside the folder
+function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix: string?)
+	if not _controllers and typeof(_controllers) == "Instance" then
+		if suffix then
+			_controllers = {}
+			
+			local children = _controllers:GetDescendants()
+			
+			for _, module: ModuleScript in pairs(children) do
+				if module:IsA("ModuleScript") and module.Name:sub(-#suffix) == suffix then
+					_controllers[#_controllers + 1] = module
+				end
+			end
+		else
+			_controllers = _controllers:GetChildren()
+		end
+	end
 	
 	assert(typeof(_controllers) == "table", "Expected a table or Instance")
 	
 	for _, module in pairs(_controllers) do
 		if typeof(module) == "Instance" and module:IsA("ModuleScript") then
-			local controller: redTypes.ControllerType = require(module)
-			controller.__index = controller
-			
-			assert(controller.name, "Controller is missing a name")
-			assert(
-				not controllers[controller.controllerId],
-				"Controller with name " .. controller.name .. " already exists"
-			)
-			assert(controller.controllerId, "Controller is missing a controllerId.")
-			assert(controller.redController, "Controller is not a red Controller.")
-			
-			local newController: redTypes.ControllerType = setmetatable({}, controller)
-			
-			if newController.init then
-				newController:init()
-			end
-			
-			if newController.subscribe then
-				storeSubscriptions[#storeSubscriptions + 1] = newController.controllerId
-			end
-			
-			controllers[newController.controllerId] = newController
+			require(module)
+		end
+	end
+end
+
+function Controller.start()
+	for _, controller: redTypes.ControllerType in pairs(controllers) do
+		if controller.ready then
+			controller:ready()
 		end
 	end
 end
