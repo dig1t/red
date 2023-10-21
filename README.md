@@ -2,7 +2,7 @@
 ## wally
 Add the below line to your wally.toml file
 ```toml
-red = "dig1t/red@1.1.7"
+red = "dig1t/red@1.1.8"
 ```
 ## Roblox Studio
 Download the rbxm file from the [releases](https://github.com/dig1t/red/releases) tab and insert it into ReplicatedStorage or your location of choice.
@@ -25,19 +25,18 @@ local server = red.Server.new() -- Constructs a new server
 server:init() -- Starts listening to dispatches
 ```
 
-#### Module Setup
+#### Service Setup
 ```lua
-local module = {}
+local my_service = red.Service.new({
+	name = "my_service", -- Action prefix for binding actions
+	private = { -- Functions not available to clients
+		"MODULE_PRINT"
+	}
+})
 
-module.name = "module" -- Action prefix for binding actions
-module.version = "1.0.0" -- For your records
-module.private = { -- Functions not available to clients
-	"MODULE_PRINT"
-}
-
--- module.print will be binded as MODULE_SCRIPT
--- by using module.name as the prefix
-module.print = function(payload)
+-- my_service:print will be binded as MY_SERVICE_PRINT
+-- by using my_service.name as the prefix
+function my_service:print(payload)
 	-- Payload can be missing
 	-- Check for payload and the message being received
 	if payload and payload.message then
@@ -45,7 +44,7 @@ module.print = function(payload)
 	end
 end
 
-module.hello = function(player, payload)
+function my_service:hello(player, payload)
 	print(string.format(
 		"%s said %s.",
 		player.Name,
@@ -53,7 +52,7 @@ module.hello = function(player, payload)
 	))
 end
 
-return module
+return my_service
 ```
 
 #### Server:bind(type, fn, private)
@@ -76,17 +75,17 @@ end, true)
 Unbinds an action from the server
 
 
-#### Server:loadModule(path)
-`Server:loadModule(path) -> void`
+#### Server:loadService(path)
+`Server:loadService(path) -> void`
 
- Loads a module to bind to the server.
+ Loads a service to bind to the server.
  `path` must be a ModuleScript instance
 
-#### Server:loadModules(modules)
-`Server:loadModules(modules) -> void`
+#### Server:loadServices(services)
+`Server:loadServices(services) -> void`
 
- Loads a module to bind to the server.
- `modules` must be a table of ModuleScripts to load
+ Loads a service to bind to the server.
+ `services` must be a table of ModuleScripts to load
 
 #### Server:localCall(actionType, ...)
 `Server:localCall(actionType, [...]) -> action`

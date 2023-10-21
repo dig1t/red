@@ -1,21 +1,16 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
-local red = require(ReplicatedStorage.red)
+local red = require(ReplicatedStorage.Packages.red)
 
-local dLib = require(ReplicatedStorage.red.dLib)
+local dLib = require(ReplicatedStorage.Packages.dLib)
 local Util = dLib.import("Util")
 
 local server = red.Server.new()
 
 do -- Initialize
-	--server:loadModules(script:GetChildren())
+	--server:loadServices(script:GetChildren())
 	server:init()
-	
-	function server.error(err, userId) -- Override default error handler
-		-- server:localCall("ANALYTICS_ERROR", err, userId)
-		error(err, 2)
-	end
 end
 
 -- @desc teleports a player

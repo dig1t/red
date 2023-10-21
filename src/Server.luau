@@ -1,109 +1,73 @@
---[[
--- Usage example
--- Server
-local test = {}
+--!strict
 
-test.name = "test"
-test.version = "1.0.0"
-test.private = { -- Clients cannot invoke these
-	"TEST_HELLO"
-}
+local redTypes = require(script.Parent.redTypes)
+local redUtil = require(script.Parent.redUtil)
 
--- Begin Module Functions
-test.ping = function(player, payload)
-	store:dispatch(player, {
-		type = "TEST_PONG",
-		payload = {
-			clientTime = payload.clientTime
-			responseTime = tick() - payload.clientTime
-		}
-	})
-end
-
-return test
-
--- Client
-local store = red.Store.new()
-
-store:subscribe(function(action)
-	if action.type == "TEST_PONG" then
-		local t = tick()
-		
-		print("client to server time: ", action.payload.responseTime)
-		print("server to client time: ", t - (action.payload.responseTime + payload.clientTime))
-		print("client 2 server 2 client time: ", t - action.payload.clientTime)
-	end
-end)
-
-store:dispatch({
-	type = "TEST_PING",
-	payload = {
-		clientTime = tick()
-	}
-})]]
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Constants = require(script.Parent.Constants)
-
-local remotes = ReplicatedStorage[Constants.REMOTE_FOLDER_NAME]
+local remotes = redUtil.getRemotes()
 
 local Server = {}
 Server.__index = Server
 
-function Server.error(err)
-	error(err or "", 3)
-end
-
-function Server:sendError(err)
-	Server.error(err)
-	-- self:localCall("ANALYTICS_ERROR", {
-	-- 	error = err
-	-- })
-end
-
-function Server:bind(type, fn, private)
-	assert(typeof(type) == "string", "Action type must be a string")
-	assert(typeof(fn) == "function", "Action must be a function")
+function Server.new()
+	local self = setmetatable({}, Server)
 	
-	self[private == true and "_privateActions" or "_actions"][type] = fn
+	self._reducers = {}
+	self._privateReducers = {}
+	self._services = {}
+	
+	math.randomseed(os.clock() * 1e6)
+	
+	return self
+end
+
+function Server:bind(actionType: string, reducer: () -> any, private: boolean?)
+	assert(typeof(actionType) == "string", "Action type must be a string")
+	assert(typeof(reducer) == "function", "Action must be a function")
+	
+	self[private == true and "_privateReducers" or "_reducers"][actionType] = reducer
 end
 
 function Server:unbind(id)
-	assert(self._actions[id] or self._privateActions[id], "Action does not exist")
+	assert(self._reducers[id] or self._privateReducers[id], "Action reducer does not exist")
 	
-	self._actions[id] = nil
-	self._privateActions[id] = nil
+	self._reducers[id] = nil
+	self._privateReducers[id] = nil
 end
 
-function Server:loadModule(path)
-	assert(typeof(path) == "Instance" and path:IsA("ModuleScript"), "Path is not a ModuleScript")
+function Server:loadService(moduleInstance: ModuleScript)
+	assert(
+		typeof(moduleInstance) == "Instance" and moduleInstance:IsA("ModuleScript"),
+		"Path is not a ModuleScript"
+	)
 	
-	local module = require(path)
+	local service: redTypes.ServerService = require(moduleInstance)
 	
-	assert(module.name, "Module does not have a name")
+	assert(service.name, "Service does not have a name")
+	assert(service._redService, "Service is not a red service")
 	
-	--self._modules[module.name] = module.version or true
+	self._services[service.name] = service
 	
-	-- Iterate through module and format action names
+	-- Iterate through service and format action names
 	-- to include the controller name
 	-- and capitalize all characters
-	for name, func in pairs(module) do
-		if typeof(func) == "function" then
-			local actionType = string.upper(module.name) .. "_" .. string.upper(name)
+	for key, reducer in pairs(service) do
+		if typeof(reducer) == "function" and typeof(key) == "string" then
+			local actionType: string = string.upper(service.name) .. "_" .. string.upper(key)
 			
 			self:bind(
 				actionType,
-				func,
-				typeof(module.private) == "table" and module.private[actionType] or module.private == true
+				reducer,
+				typeof(service.private) == "table" and
+					table.find(service.private, actionType) ~= nil or -- Check if reducer is private
+					service.private == true -- Check if all reducers are private
 			)
 		end
 	end
 end
 
-function Server:loadModules(modules)
-	for _, module in pairs(modules) do
-		self:loadModule(module)
+function Server:loadServices(services: { ModuleScript })
+	for _, service: ModuleScript in pairs(services) do
+		self:loadService(service)
 	end
 end
 
@@ -111,12 +75,20 @@ end
 -- Arguments will be interpreted as either (actionType, payload) or (actionType, player, payload)
 function Server:localCall(actionType, ...)
 	assert(typeof(actionType) == "string", "Action type must be a string")
-	assert(self._actions[actionType] or self._privateActions[actionType], "Action \"" .. actionType .. "\" does not exist")
+	assert(
+		self._reducers[actionType] or self._privateReducers[actionType],
+		"Action \"" .. actionType .. "\" does not exist"
+	)
 	
-	local success, res = pcall(self._actions[actionType] or self._privateActions[actionType], ...)
+	local serviceName: string = string.lower(string.split(actionType, "_")[1])
+	local service: redTypes.ServerService = self._services[serviceName]
+	
+	local success: boolean, res: redTypes.Action = pcall(
+		self._reducers[actionType] or self._privateReducers[actionType], service, ...
+	)
 	
 	if not success then
-		self:sendError(actionType .. ": " ..res)
+		error(res, 2)
 	end
 	
 	if typeof(res) == "table" and not res.err then
@@ -129,12 +101,12 @@ end
 function Server:call(action, player)
 	assert(action and typeof(action.type) == "string", "Action type must be a string")
 	
-	if not (self._actions[action.type] or self._privateActions[action.type]) then
+	if not (self._reducers[action.type] or self._privateReducers[action.type]) then
 		return
-	elseif player and self._privateActions[action.type] then
+	elseif player and self._privateReducers[action.type] then
 		-- Player should not be calling a private action
 		
-		return --self:sendError(player.userId .. " attempted to call a private action")
+		return -- error(player.userId .. " attempted to call a private action")
 	end
 	
 	local args = {}
@@ -149,12 +121,34 @@ function Server:call(action, player)
 		table.insert(args, action.payload)
 	end
 	
-	local success, res = pcall(self._actions[action.type] or self._privateActions[action.type], args[1] and args[1], args[2] and args[2])
+	local serviceName: string = string.lower(string.split(action.type, "_")[1])
+	local service: redTypes.ServerService = self._services[serviceName]
+	
+	local success: boolean, res: redTypes.Action | string = pcall(
+		self._reducers[action.type] or self._privateReducers[action.type],
+		service,
+		args[1], --// TODO: ??
+		args[2] --// TODO: ??
+	)
 	
 	if not success then
-		self:sendError(res, typeof(args[1]) == "Instance" and args[1]:IsA("Player") and args[1].UserId)
+		task.spawn(function()
+			error(
+				res .. (
+					typeof(args[1]) == "Instance" and args[1]:IsA("Player") and (" - UserId: " .. args[1].UserId) or ""
+				),
+				2
+			)
+		end)
+		
+		res = {
+			type = action.type,
+			err = res,
+			success = false
+		} :: redTypes.Action
 	end
 	
+	-- Add a success property to the action
 	if typeof(res) == "table" and not res.err and res.success == nil then
 		res.success = true
 	elseif not res then
@@ -167,17 +161,23 @@ function Server:call(action, player)
 end
 
 function Server:init()
+	for _, service in pairs(self._services) do
+		if typeof(service.init) == "function" then
+			service:init()
+		end
+	end
+	
 	-- Hook listeners
 	
 	-- store:dispatch() called from client
-	remotes.Client.OnServerEvent:Connect(function(player, action)
+	remotes.Client.OnServerEvent:Connect(function(player: Player, action: redTypes.Action)
 		if action.method and action.method == "get_result" then
 			return
 		end
 		
 		action.player = player
 		
-		local res = self:call(action, player)
+		local res: redTypes.Action = self:call(action, player)
 		
 		if not res then
 			return
@@ -186,7 +186,10 @@ function Server:init()
 		-- If the action's method is "get" fire it back
 		-- to the sender
 		if action.method and action.method == "get" then
-			assert(typeof(res) == "table", action.type .. " - Cannot return a " .. typeof(res) .. " type to a client.")
+			assert(
+				typeof(res) == "table",
+				action.type .. " - Cannot return a " .. typeof(res) .. " type to a client."
+			)
 			
 			res.uid = action.uid
 			
@@ -200,7 +203,7 @@ function Server:init()
 	end)
 	
 	-- store:dispatch() called from server
-	remotes.Server.Event:Connect(function(action)
+	remotes.Server.Event:Connect(function(action: redTypes.Action)
 		if action.method and action.method == "get_result" then
 			-- Ignore actions with get_result methods, these will
 			-- always be routed back into this listener
@@ -217,7 +220,10 @@ function Server:init()
 		-- If the action's method is "get" fire it back
 		-- to the sender
 		if action.method and action.method == "get" then
-			assert(typeof(res) == "table", action.type .. " - Cannot return a " .. typeof(res) .. " type to a client. Only tables can be returned.")
+			assert(
+				typeof(res) == "table",
+				action.type .. " - Cannot return a " .. typeof(res) .. " type to a client. Only tables can be returned."
+			)
 			
 			res.uid = action.uid
 			
@@ -229,18 +235,6 @@ function Server:init()
 			remotes.Server:Fire(res)
 		end
 	end)
-end
-
-function Server.new()
-	local self = setmetatable({}, Server)
-	
-	self._actions = {}
-	self._privateActions = {}
-	--self._modules = {}
-	
-	math.randomseed(os.clock() * 1e6)
-	
-	return self
 end
 
 return Server
