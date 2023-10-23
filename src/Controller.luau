@@ -120,7 +120,6 @@ function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix
 			
 			for _, module: ModuleScript in pairs(children) do
 				if module:IsA("ModuleScript") and module.Name:sub(-#suffix) == suffix then
-					print(module.Name)
 					_controllers[#_controllers + 1] = module
 				end
 			end
@@ -143,7 +142,6 @@ function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix
 				storeSubscriptions[#storeSubscriptions + 1] = newController.controllerId
 			end
 			
-			print("Created controller " .. newController.name)
 			controllers[newController.name] = newController
 		end
 	end
