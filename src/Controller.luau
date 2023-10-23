@@ -102,16 +102,6 @@ function Controller.new(config: redTypes.ControllerConfig): redTypes.ControllerT
 		redController = true;
 	}, { __index = Controller })
 	
-	if newController.init then
-		newController:init()
-	end
-	
-	if newController.subscribe then
-		storeSubscriptions[#storeSubscriptions + 1] = newController.controllerId
-	end
-	
-	controllers[newController.controllerId] = newController
-	
 	return newController
 end
 
@@ -122,14 +112,15 @@ end
 
 -- Setting suffix to true will make this function add ALL modules inside the folder
 function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix: string?)
-	if not _controllers and typeof(_controllers) == "Instance" then
+	if typeof(_controllers) == "Instance" then
 		if suffix then
-			_controllers = {}
-			
 			local children = _controllers:GetDescendants()
+			
+			_controllers = {}
 			
 			for _, module: ModuleScript in pairs(children) do
 				if module:IsA("ModuleScript") and module.Name:sub(-#suffix) == suffix then
+					print(module.Name)
 					_controllers[#_controllers + 1] = module
 				end
 			end
@@ -138,11 +129,22 @@ function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix
 		end
 	end
 	
-	assert(typeof(_controllers) == "table", "Expected a table or Instance")
+	assert(typeof(_controllers) == "table", "Expected Controllers to be a table or Folder of ModuleScripts")
 	
 	for _, module in pairs(_controllers) do
 		if typeof(module) == "Instance" and module:IsA("ModuleScript") then
-			require(module)
+			local newController = require(module)
+			
+			if newController.init then
+				newController:init()
+			end
+			
+			if newController.subscribe then
+				storeSubscriptions[#storeSubscriptions + 1] = newController.controllerId
+			end
+			
+			print("Created controller " .. newController.name)
+			controllers[newController.name] = newController
 		end
 	end
 end
