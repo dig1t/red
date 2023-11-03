@@ -15,8 +15,6 @@ function Server.new()
 	self._privateReducers = {}
 	self._services = {}
 	
-	math.randomseed(os.clock() * 1e6)
-	
 	return self
 end
 
