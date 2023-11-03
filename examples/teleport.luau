@@ -22,7 +22,7 @@ script.Parent.Touched:connect(function(part)
 			type = "PLAYER_TELEPORT",
 			player = player,
 			payload = {
-				location = CFrame.new(math.random(-100, 100), 10, math.random(-100, 100))
+				location = CFrame.new(Util.random(-100, 100), 10, Util.random(-100, 100))
 			}
 		})
 		

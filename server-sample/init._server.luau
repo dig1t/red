@@ -40,7 +40,7 @@ local function playerAdded(player)
 			type = "PLAYER_TELEPORT",
 			player = player,
 			payload = {
-				location = CFrame.new(math.random(-100, 100), 40, math.random(-100, 100))
+				location = CFrame.new(Util.random(-100, 100), 40, Util.random(-100, 100))
 			}
 		})
 	end)
