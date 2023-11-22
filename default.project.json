@@ -1,11 +1,6 @@
 {
-	"name": "red",
-	"globIgnorePaths": ["src/wally.toml"],
-	"tree": {
-		"$path": "src/Packages",
-
-		"red": {
-			"$path": "src"
-		}
-	}
+  "name": "red",
+  "tree": {
+    "$path": "src"
+  }
 }

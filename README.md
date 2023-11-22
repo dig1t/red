@@ -2,7 +2,7 @@
 ## wally
 Add the below line to your wally.toml file
 ```toml
-red = "dig1t/red@1.2.4"
+red = "dig1t/red@1.2.6"
 ```
 ## Roblox Studio
 Download the rbxm file from the [releases](https://github.com/dig1t/red/releases) tab and insert it into ReplicatedStorage or your location of choice.
