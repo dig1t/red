@@ -12,9 +12,9 @@ red.State = require(script.State)
 red.Store = require(script.Store)
 red.Service = require(script.Service)
 red.Controller = require(script.Controller)
-red.redTypes = redTypes
+red.Types = redTypes
 
 -- Alias
-red.Types = redTypes
+red.redTypes = redTypes
 
 return red

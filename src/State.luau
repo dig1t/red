@@ -45,13 +45,13 @@ print('state destroyed?', not success) -- expect: true
 --!strict
 
 local dLib = require(script.Parent.Parent.dLib)
-local Util = dLib.import("Util")
+local Util = dLib.import("dLib/Util")
 local redTypes = require(script.Parent.redTypes)
 
 local State = {}
 State.__index = State
 
-function State.new(initialState: table?): redTypes.State
+function State.new(initialState: { [any]: any }?): redTypes.State
 	if initialState ~= nil then
 		assert(typeof(initialState) == "table", "Expected initialState to be a table")
 	end

@@ -1,6 +1,6 @@
 [package]
 name = "dig1t/red"
-version = "1.2.6"
+version = "1.2.7"
 license = "Apache-2.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
@@ -9,4 +9,4 @@ include = ["src", "src/**", "wally.toml", "default.project.json"]
 exclude = ["**"]
 
 [dependencies]
-dLib = "dig1t/dlib@1.1.4"
+dLib = "dig1t/dlib@1.1.7"

@@ -1,18 +1,22 @@
 --!strict
 
+export type ActionPayload = {
+	[any]: any
+}
+
 export type Action = {
 	uid: string?,
 	method: string?,
 	player: Player?,
 	timeout: number?,
 	type: string,
-	payload: table?,
+	payload: ActionPayload?,
 	success: boolean?,
 	err: string?
 }
 
 export type State = {
-	context: table,
+	context: ActionPayload,
 	listeners: {
 		[SubscriptionId]: (prevState: any, newState: any) -> nil
 	}
@@ -20,10 +24,10 @@ export type State = {
 
 export type Server = {
 	_reducers: {
-		[string]: (player: Player, payload: table?) -> any
+		[string]: (player: Player, payload: ActionPayload?) -> any
 	},
 	_privateReducers: {
-		[string]: (player: Player, payload: table?) -> any
+		[string]: (player: Player, payload: ActionPayload?) -> any
 	},
 	remotes: {
 		Client: RemoteEvent,

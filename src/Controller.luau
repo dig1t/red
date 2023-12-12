@@ -50,7 +50,7 @@ local RunService = game:GetService("RunService")
 local dLib = require(script.Parent.Parent.dLib)
 local Store = require(script.Parent.Store)
 local redTypes = require(script.Parent.redTypes)
-local Util = dLib.import("Util")
+local Util = dLib.import("dLib/Util")
 
 local Controller: redTypes.ControllerType = {}
 
@@ -62,7 +62,7 @@ local storeSubscriptions: { [number]: string } = {}
 store:subscribe(function(action)
 	for _, controllerId: string in pairs(storeSubscriptions) do
 		local controller: redTypes.ControllerType = controllers[controllerId]
-		
+
 		if controller and controller.subscribe then
 			controller:subscribe(action)
 		end
@@ -84,24 +84,24 @@ function Controller.new(config: redTypes.ControllerConfig): redTypes.ControllerT
 		not controllers[config.name],
 		"Controller with name " .. config.name .. " already exists"
 	)
-	
+
 	if config.init then
 		assert(typeof(config.init) == "function", "Expected config.init to be a function")
 	end
-	
+
 	if config.subscribe then
 		assert(
 			typeof(config.subscribe) == "function",
 			"Expected config.subscribe to be a function"
 		)
 	end
-	
+
 	local newController = setmetatable({
 		name = config.name;
 		controllerId = Util.randomString();
 		redController = true;
 	}, { __index = Controller })
-	
+
 	return newController
 end
 
@@ -115,9 +115,9 @@ function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix
 	if typeof(_controllers) == "Instance" then
 		if suffix then
 			local children = _controllers:GetDescendants()
-			
+
 			_controllers = {}
-			
+
 			for _, module: ModuleScript in pairs(children) do
 				if module:IsA("ModuleScript") and module.Name:sub(-#suffix) == suffix then
 					_controllers[#_controllers + 1] = module
@@ -127,21 +127,21 @@ function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix
 			_controllers = _controllers:GetChildren()
 		end
 	end
-	
+
 	assert(typeof(_controllers) == "table", "Expected Controllers to be a table or Folder of ModuleScripts")
-	
+
 	for _, module in pairs(_controllers) do
 		if typeof(module) == "Instance" and module:IsA("ModuleScript") then
 			local newController = require(module)
-			
+
 			if newController.init then
 				newController:init()
 			end
-			
+
 			if newController.subscribe then
 				storeSubscriptions[#storeSubscriptions + 1] = newController.controllerId
 			end
-			
+
 			controllers[newController.name] = newController
 		end
 	end
@@ -159,7 +159,7 @@ function Controller.get(name: string): redTypes.ControllerType
 	if not controllers[name] then
 		warn("Controller with name " .. name .. " does not exist")
 	end
-	
+
 	return controllers[name]
 end
 
