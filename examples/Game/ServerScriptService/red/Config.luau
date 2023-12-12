@@ -49,7 +49,7 @@ cfg.events = {
 	end;
 }
 
--- set to true if using a  custom analytics service (e.g. Google Analytics)
+-- set to true if using a custom analytics service (e.g. Google Analytics)
 cfg.useAnalytics = false
 
 return cfg

@@ -4,7 +4,7 @@ local Players = game:GetService("Players")
 local red = require(ReplicatedStorage.Packages.red)
 
 local dLib = require(ReplicatedStorage.Packages.dLib)
-local Util = dLib.import("Util")
+local Util = dLib.import("dLib/Util")
 
 local server = red.Server.new()
 

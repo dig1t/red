@@ -7,7 +7,7 @@ local HttpService = game:GetService("HttpService")
 
 local red = require(ReplicatedStorage.red)
 local dLib = require(ReplicatedStorage.red.dLib)
-local Util = dLib.import("Util")
+local Util = dLib.import("dLib/Util")
 
 local cfg = require(ServerScriptService.red.Config)
 
