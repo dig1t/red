@@ -37,7 +37,7 @@ local store = red.Store.new()
 store:subscribe(function(action)
 	if action.type == "TEST_PONG" then
 		local t = tick()
-		
+
 		print("client to server time: ", action.payload.responseTime)
 		print("server to client time: ", t - (action.payload.responseTime + payload.clientTime))
 		print("client 2 server 2 client time: ", t - action.payload.clientTime)
@@ -63,19 +63,19 @@ function Service.new(config: redTypes.ServerServiceConfig): redTypes.ServerServi
 	assert(config, "Config must be provided")
 	assert(typeof(config) == "table", "Config must be a table")
 	assert(config.name, "Config must have a name")
-	
+
 	if config.private then
 		assert(
 			typeof(config.private) == "table" or typeof(config.private) == "boolean",
 			"Config.private must be a table or boolean"
 		)
 	end
-	
+
 	local self = setmetatable(config, Service)
-	
+
 	self._redService = true
 	self._services = {}
-	
+
 	return self
 end
 

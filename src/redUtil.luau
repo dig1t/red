@@ -16,20 +16,20 @@ function Util.getRemotes()
 		-- Container for remotes
 		remotes = Instance.new("Folder")
 		remotes.Name = Constants.REMOTE_FOLDER_NAME
-		
+
 		-- store:dispatch() calls from client to server and server to client
 		local client: RemoteEvent = Instance.new("RemoteEvent")
 		client.Name = "Client"
 		client.Parent = remotes
-		
+
 		-- store:dispatch() calls from server to server
 		local server: BindableEvent = Instance.new("BindableEvent")
 		server.Name = "Server"
 		server.Parent = remotes
-		
+
 		remotes.Parent = ReplicatedStorage
 	end
-	
+
 	return remotes
 end
 
