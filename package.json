@@ -24,5 +24,8 @@
   "bugs": {
     "url": "https://github.com/dig1t/red/issues"
   },
-  "homepage": "https://github.com/dig1t/red#readme"
+  "homepage": "https://github.com/dig1t/red#readme",
+  "dependencies": {
+    "moonwave": "^1.1.2"
+  }
 }
