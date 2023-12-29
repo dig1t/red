@@ -1,12 +1,18 @@
 {
-  "name": "red-library",
+  "name": "red",
   "version": "1.2.8",
-  "description": "",
+  "description": "Simplified server-to-client, client-to-server, and server-to-server communication",
   "main": "src/init.luau",
   "scripts": {
-    "build:rojo": "rojo build -o red.rbxl dev.project.json",
-    "build": "npm run build:rojo",
-    "dev": "npm run build && red.rbxl && npm start",
+    "build:dependencies": "wally install",
+    "build:rojo": "rojo build -o dev-build.rbxl dev.project.json",
+    "build:docs": "moonwave build",
+    "build": "npm run build:dependencies && npm run build:rojo",
+
+    "test:run": "run-in-roblox --place dev-build.rbxl --script runners/test.lua",
+    "test": "npm run build && npm run test:run",
+
+    "dev": "npm run build && dev-build.rbxl && npm start",
     "start": "rojo serve dev.project.json"
   },
   "repository": {
