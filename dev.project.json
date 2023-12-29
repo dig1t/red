@@ -15,10 +15,6 @@
 
         "dLib": {
           "$path": "modules/dlib"
-        },
-
-        "TestEZ": {
-          "$path": "modules/testez"
         }
       },
 
