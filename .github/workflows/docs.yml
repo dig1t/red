@@ -3,6 +3,10 @@ name: Deploy Moonwave Documentation to Pages
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - 'moonwave.toml'
 
   workflow_dispatch:
 
