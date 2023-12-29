@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/github/dig1t/red/badge.svg?branch=main)](https://coveralls.io/github/dig1t/red?branch=main)
+
 # Installing
 ## wally
 Add the below line to your wally.toml file
