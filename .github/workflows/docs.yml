@@ -1,14 +1,11 @@
 name: Deploy Moonwave Documentation to Pages
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - 'src/**'
-      - 'docs/**'
-      - 'moonwave.toml'
-
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
 
 permissions:
   contents: write
@@ -20,11 +17,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  deploy-docs:
+    if: github.event.pull_request.merged
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
