@@ -1,11 +1,13 @@
-name: Deploy Moonwave Documentation to Pages
+name: Deploy documentation to GitHub Pages
 
 on:
-  pull_request:
+  push:
     branches:
       - main
-    types:
-      - closed
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - 'moonwave.toml'
 
 permissions:
   contents: write
@@ -18,8 +20,6 @@ concurrency:
 
 jobs:
   deploy-docs:
-    if: github.event.pull_request.merged
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
