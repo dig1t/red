@@ -4,3 +4,6 @@
 [submodule "modules/lemur"]
 	path = modules/lemur
 	url = https://github.com/LPGhatguy/lemur.git
+[submodule "modules/dlib"]
+	path = modules/dlib
+	url = https://github.com/dig1t/dlib.git
