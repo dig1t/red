@@ -22,9 +22,7 @@
 
   // Ensure enough terminal history is preserved when running tests.
   "terminal.integrated.scrollback": 10000,
-  "git.ignoredRepositories": [
-      "modules/*"
-  ],
+  "git.autoRepositoryDetection": "openEditors",
 
   // Configure todo-tree to exclude node_modules, dist, and compiled.
   "todo-tree.filtering.excludeGlobs": [
