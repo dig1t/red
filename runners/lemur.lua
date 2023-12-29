@@ -12,7 +12,7 @@ local habitat = lemur.Habitat.new()
 -- We'll put all of our library code and dependencies here
 local ReplicatedStorage = habitat.game:GetService("ReplicatedStorage")
 
-local packages = habitat.Instance.new("Folder")
+local packages = lemur.Instance.new("Folder")
 packages.Name = "Packages"
 packages.Parent = ReplicatedStorage
 
