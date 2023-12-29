@@ -65,7 +65,7 @@ jobs:
       run: darklua process src src --format retain-lines
 
     - name: Run test and make coverage report
-      run: lua -lluacov test/lemur.lua
+      run: lua -lluacov runners/lemur.lua
 
     - name: Report coverage to coveralls
       run: luacov-coveralls -r src
