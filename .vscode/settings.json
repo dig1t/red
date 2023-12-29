@@ -1,8 +1,59 @@
 {
-	"luau-lsp.require.mode": "relativeToFile",
+  "luau-lsp.require.mode": "relativeToFile",
 	"luau-lsp.sourcemap.rojoProjectFile": "default.project.json",
+  "luau-lsp.types.definitionFiles": ["testez.d.lua"],
+
+  "[lua]": {
+		"editor.defaultFormatter": "EditorConfig.EditorConfig",
+		"editor.formatOnSave": true
+	},
+
+	"[luau]": {
+		"editor.defaultFormatter": "EditorConfig.EditorConfig",
+		"editor.formatOnSave": true
+	},
 
   "files.exclude": {
-    "build": true
+    //"Packages": true,
+    "node_modules": true,
+    "dev-build.rbxl": true,
+    "modules/*/*": true // only show that the submodules folder exists
+  },
+
+  // Ensure enough terminal history is preserved when running tests.
+  "terminal.integrated.scrollback": 10000,
+  "git.ignoredRepositories": [
+      "modules/*"
+  ],
+
+  // Configure todo-tree to exclude node_modules, dist, and compiled.
+  "todo-tree.filtering.excludeGlobs": [
+    "Packages",
+    "node_modules",
+    "modules"
+  ],
+
+  "todo-tree.highlights.defaultHighlight": {
+    "foreground": "#fff",
+    "background": "#f00",
+    "iconColour": "#fff",
+    "rulerColour": "#ff000080",
+    "gutterIcon": true
+  },
+  "todo-tree.highlights.customHighlight": {
+    "TODO": {
+      "background": "#0040ff"
+    },
+    "HACK": {
+      "background": "#0f0",
+      "foreground": "#000"
+    },
+    "FIXME": {
+      "background": "#900"
+    },
+    "[x]": {
+      "background": "#0f0",
+      "foreground": "#000"
+    }
   }
 }
