@@ -8,7 +8,9 @@ Add the below line to your wally.toml file
 red = "dig1t/red@1.2.8"
 ```
 ## Roblox Studio
-Download the rbxm file from the [releases](https://github.com/dig1t/red/releases) tab and insert it into ReplicatedStorage or your location of choice.
+Download the rbxl file from the [releases](https://github.com/dig1t/red/releases) tab.
+
+Once the place file is open, you can find the package inside `ReplicatedStorage.Packages`.
 
 # Documentation
 
