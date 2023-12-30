@@ -97,7 +97,10 @@ jobs:
           git push -u origin main --force-with-lease
           echo "Commit amended"
 
-      - name: Build package
+      - name: Publish to wally
+        run: wally publish
+
+      - name: Build package place file
         run: rojo build -o ${{ steps.update-files.outputs.REPO_NAME }}.rbxl build.project.json
 
       - name: Upload Roblox level file to release
