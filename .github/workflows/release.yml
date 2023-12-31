@@ -82,23 +82,30 @@ jobs:
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_OUTPUT
           echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_OUTPUT
 
-      - name: Install aftman dependencies
-        uses: ok-nick/setup-aftman@v0.4.2
-
-      - name: Install dependencies
-        run: npm run build:dependencies
-
-      - name: Amend the last commit
+      - name: Commit files with new version
         run: |
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git add --all
           git commit -m "Update to ${{ steps.update-files.outputs.TAG_NAME }}"
           git push -u origin main --force-with-lease
-          echo "Commit amended"
+          echo "Committed changes"
+
+      - name: Install aftman dependencies
+        uses: ok-nick/setup-aftman@v0.4.2
+
+      - name: Install dependencies
+        run: npm run build:dependencies
 
       - name: Publish to wally
-        run: wally publish
+        shell: bash
+        env:
+          WALLY_TOKEN: ${{ secrets.WALLY_TOKEN }}
+        run: |
+          rm -rf packages testez.toml .github node_modules .vscode
+          mkdir -p ~/.wally
+          printf "[tokens]\n\"https://api.wally.run/\" = \"%s\"" "$WALLY_TOKEN" >> ~/.wally/auth.toml
+          wally publish
 
       - name: Build package place file
         run: rojo build -o ${{ steps.update-files.outputs.REPO_NAME }}.rbxl build.project.json
