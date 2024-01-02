@@ -53,7 +53,7 @@ local redTypes = require(script.Parent.redTypes)
 
 local Util = dLib.import("dLib/Util")
 
-local Controller: redTypes.ControllerType = {}
+local Controller = {}
 
 local store = Store.new()
 
