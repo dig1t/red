@@ -3,24 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - main
-      - development
-      - hotfixes
-      - 'feature-*'
-      - 'update-*'
-      - 'hotfix-*'
-      - 'bug-*'
+      - '*'
     paths:
       - 'src/**'
-  pull_request:
-    branches:
-      - main
-      - development
-      - hotfixes
-      - 'feature-*'
-      - 'update-*'
-      - 'hotfix-*'
-      - 'bug-*'
 
 jobs:
   lint:
@@ -32,10 +17,21 @@ jobs:
       - name: Install dependencies
         uses: ok-nick/setup-aftman@v0.4.2
 
-      - name : Run selene
+      - name: Download type files
+        run: curl -L "https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.lua" > globalTypes.d.lua
+
+      - name: Generate sourcemaps
+        run: rojo sourcemap --include-non-scripts --output sourcemap.json
+
+      - name: Lint with luau-lsp
+        run: luau-lsp analyze --defs=globalTypes.d.lua --sourcemap=sourcemap.json --no-strict-dm-types --ignore=Packages/** --ignore=*.spec.lua --ignore=*.spec.luau --flag:LuauTinyControlFlowAnalysis=True src
+
+      - name : Lint with selene
         run: selene src
 
   coverage:
+    needs: lint
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -43,11 +39,6 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: recursive
-
-    - name: Install node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
 
     - name: Install aftman dependencies
       uses: ok-nick/setup-aftman@v0.4.2
