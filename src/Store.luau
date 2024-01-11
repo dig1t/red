@@ -84,6 +84,8 @@ function Store:dispatch(...): nil
 			warn("Store - could not dispatch action" .. action.type) -- Convert to error handler (?)
 		end
 	end
+
+	return nil
 end
 
 --[[
@@ -174,7 +176,7 @@ function Store:_callSubscribers(action: redTypes.Action, safeCall: boolean?)
 	end
 end
 
-function Store:subscribe(fn: () -> nil): redTypes.SubscriptionId
+function Store:subscribe(fn: (action: redTypes.Action) -> nil): redTypes.SubscriptionId
 	assert(typeof(fn) == "function", "Callback argument must exist and be a function")
 
 	local id: redTypes.SubscriptionId = Util.randomString(8) -- Unique reference ID used for unsubscribing

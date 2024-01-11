@@ -56,7 +56,7 @@ store:dispatch({
 
 local redTypes = require(script.Parent.redTypes)
 
-local Service = {}
+local Service: redTypes.ServerServiceClass = {} :: redTypes.ServerServiceClass
 Service.__index = Service
 
 function Service.new(config: redTypes.ServerServiceConfig): redTypes.ServerService

@@ -48,7 +48,7 @@ local dLib = require(script.Parent.Parent.dLib)
 local Util = dLib.import("dLib/Util")
 local redTypes = require(script.Parent.redTypes)
 
-local State = {}
+local State: redTypes.StateClass = {} :: redTypes.StateClass
 State.__index = State
 
 function State.new(initialState: { [any]: any }?): redTypes.State
@@ -67,7 +67,7 @@ function State.new(initialState: { [any]: any }?): redTypes.State
 		[redTypes.SubscriptionId]: (prevState: any, newState: any) -> nil
 	}
 
-	return self :: redTypes.State
+	return self
 end
 
 -- Number of first level children
@@ -75,41 +75,45 @@ function State:length(): number
 	return Util.tableLength(self._context)
 end
 
-function State:get(path): any -- Todo: support for nested tables
+function State:get(path: string | boolean): any -- Todo: support for nested tables
 	if typeof(path) == "number" then
 		return self._context[path] -- Return the index, if exists
 	end
 
-	return path == true and self._context or -- return the entire state
-		Util.treePath(self._context, path, ".") -- return the value at the path
+	return path == true and self._context -- return the entire state
+		or Util.treePath(self._context, path, ".") -- return the value at the path
 end
 
-function State:listen(fn: (prevState: any, newState: any) -> nil): redTypes.SubscriptionId
-	assert(typeof(fn) == "function", "Callback argument must be a function")
+function State:listen(callback: (prevState: any, newState: any) -> nil): redTypes.SubscriptionId
+	assert(typeof(callback) == "function", "Callback argument must be a function")
 
 	-- Unique reference ID used for unsubscribing
 	local subscriptionId: redTypes.SubscriptionId = Util.randomString(8)
 
-	self._listeners[subscriptionId] = fn
+	self._listeners[subscriptionId] = callback
 
 	return subscriptionId
 end
 
-function State:unlisten(subscriptionId: redTypes.SubscriptionId)
+function State:unlisten(subscriptionId: redTypes.SubscriptionId): nil
 	assert(self._listeners[subscriptionId], "State listener does not exist")
 
 	self._listeners[subscriptionId] = nil
+
+	return nil
 end
 
-function State:pushUpdates(prevState: any, newState: any)
+function State:pushUpdates(prevState: any, newState: any): nil
 	local _newState = newState or self._context
 
 	for _, callback in pairs(self._listeners) do
 		pcall(callback, prevState, _newState)
 	end
+
+	return nil
 end
 
-function State:push(a, b): any
+function State:push(a: any, b: any): any
 	local prevState = Util.extend({}, self._context) -- Create a 1 level copy // TODO: change to deep copy
 	local key = b ~= nil and a or #self._context + 1
 
@@ -120,13 +124,15 @@ function State:push(a, b): any
 	return key
 end
 
-function State:reset()
+function State:reset(): nil
 	self:pushUpdates(self._context, {})
 
 	self._context = {}
+
+	return nil
 end
 
-function State:set(newState, value)
+function State:set(newState: any, value: any): nil
 	local prevState = Util.extend({}, self._context) -- Create a local copy // TODO: change to deep copy
 
 	if typeof(newState) == "function" then
@@ -173,9 +179,11 @@ function State:set(newState, value)
 	end
 
 	self:pushUpdates(prevState)
+
+	return nil
 end
 
-function State:remove(path)
+function State:remove(path: string): nil
 	local prevState = Util.extend({}, self._context) -- Create a local copy
 
 	local treePath = Util.split(path, ".", true)
@@ -200,13 +208,17 @@ function State:remove(path)
 	end
 
 	self:pushUpdates(prevState)
+
+	return nil
 end
 
-function State:destroy()
+function State:destroy(): nil
 	self._context = nil
 	self._listeners = nil
 
 	setmetatable(self, nil)
+
+	return nil
 end
 
 return State

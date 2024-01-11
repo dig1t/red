@@ -53,14 +53,15 @@ local redTypes = require(script.Parent.redTypes)
 
 local Util = dLib.import("dLib/Util")
 
-local Controller = {}
+local Controller: redTypes.ControllerClass = {} :: redTypes.ControllerClass
+Controller.__index = Controller
 
 local store = Store.new()
 
 local controllers: { [string]: redTypes.ControllerType } = {}
 local storeSubscriptions: { [number]: string } = {}
 
-store:subscribe(function(action)
+local _subscriptionId: string = store:subscribe(function(action: redTypes.Action)
 	for _, controllerId: string in pairs(storeSubscriptions) do
 		local controller: redTypes.ControllerType = controllers[controllerId]
 
@@ -97,63 +98,92 @@ function Controller.new(config: redTypes.ControllerConfig): redTypes.ControllerT
 		)
 	end
 
-	local newController = setmetatable({
-		name = config.name;
-		controllerId = Util.randomString();
-		redController = true;
-	}, { __index = Controller })
+	local self = setmetatable({}, Controller)
 
-	return newController
+	self.name = config.name
+	self.controllerId = Util.randomString()
+	self.redController = true
+
+	return self
 end
 
-function Controller:destroy()
-	controllers[self.controllerId] = nil
-	storeSubscriptions[self.controllerId] = nil
+function Controller:destroy(): nil
+	controllers[self.name] = nil
+
+	local subscriptionIndex = table.find(storeSubscriptions, self.controllerId)
+
+	if subscriptionIndex then
+		table.remove(storeSubscriptions, subscriptionIndex)
+	end
+
+	return nil
 end
 
 -- Setting suffix to true will make this function add ALL modules inside the folder
-function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix: string?)
+function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix: string?): nil
+	local modules: { ModuleScript } = {}
+
 	if typeof(_controllers) == "Instance" then
 		if suffix then
-			local children = _controllers:GetDescendants()
+			local children: { Instance } = _controllers:GetDescendants()
 
 			_controllers = {}
 
-			for _, module: ModuleScript in pairs(children) do
-				if module:IsA("ModuleScript") and module.Name:sub(-#suffix) == suffix then
-					_controllers[#_controllers + 1] = module
+			for _, module: Instance in ipairs(children) do
+				if module and module:IsA("ModuleScript") and module.Name:sub(-#suffix) == suffix then
+					local _module: ModuleScript = module
+					modules[#modules + 1] = _module
 				end
 			end
 		else
-			_controllers = _controllers:GetChildren()
+			for _, child: Instance in ipairs(_controllers:GetChildren()) do
+				if child and child:IsA("ModuleScript") then
+					modules[#modules + 1] = child
+				end
+			end
+		end
+	elseif typeof(_controllers) == "table" then
+		for _, module: ModuleScript in ipairs(_controllers) do
+			assert(typeof(module) == "Instance", "Expected module to be an Instance")
 		end
 	end
 
-	assert(typeof(_controllers) == "table", "Expected Controllers to be a table or Folder of ModuleScripts")
+	for _, module: ModuleScript in pairs(modules) do
+		local newController: redTypes.ControllerType = require(module)
 
-	for _, module in pairs(_controllers) do
-		if typeof(module) == "Instance" and module:IsA("ModuleScript") then
-			local newController = require(module)
+		if newController.init then
+			assert(typeof(newController.init) == "function", "Expected controller.init to be a function")
 
-			if newController.init then
+			task.spawn(function()
+				debug.setmemorycategory(newController.name)
 				newController:init()
-			end
-
-			if newController.subscribe then
-				storeSubscriptions[#storeSubscriptions + 1] = newController.controllerId
-			end
-
-			controllers[newController.name] = newController
+			end)
 		end
+
+		if newController.subscribe then
+			storeSubscriptions[#storeSubscriptions + 1] = newController.controllerId
+		end
+
+		controllers[newController.name] = newController
 	end
+
+	return nil
 end
 
-function Controller.start()
+function Controller.start(): nil
 	for _, controller: redTypes.ControllerType in pairs(controllers) do
 		if controller.ready then
-			controller:ready()
+			assert(typeof(controller.ready) == "function", "Expected controller.ready to be a function")
+
+			task.spawn(function()
+				debug.setmemorycategory(controller.name)
+				print("Starting " .. controller.name)
+				controller:ready()
+			end)
 		end
 	end
+
+	return nil
 end
 
 function Controller.get(name: string): redTypes.ControllerType

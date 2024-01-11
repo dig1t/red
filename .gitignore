@@ -2,7 +2,12 @@
 
 .env
 env.luau
-*.code-workspace
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
 
 # dependency directories
 Packages
