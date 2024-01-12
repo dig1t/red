@@ -1,6 +1,7 @@
 {
   "luau-lsp.require.mode": "relativeToFile",
   "luau-lsp.sourcemap.rojoProjectFile": "default.project.json",
+  "luau-lsp.sourcemap.autogenerate": true,
   "luau-lsp.types.definitionFiles": ["testez.d.lua"],
 
   "[lua]": {
@@ -15,6 +16,7 @@
 
   "files.exclude": {
     //"Packages": true,
+    "build": true,
     "node_modules": true,
     "dev-build.rbxl": true,
     "modules/*/*": true // only show that the submodules folder exists
