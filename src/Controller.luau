@@ -177,7 +177,6 @@ function Controller.start(): nil
 
 			task.spawn(function()
 				debug.setmemorycategory(controller.name)
-				print("Starting " .. controller.name)
 				controller:ready()
 			end)
 		end

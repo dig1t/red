@@ -5,6 +5,13 @@ local redUtil = require(script.Parent.redUtil)
 
 local remotes = redUtil.getRemotes()
 
+local ignoredReducerKeys = {
+	"init",
+	"_redService",
+	"name",
+	"private"
+}
+
 local Server: redTypes.ServerClass = {} :: redTypes.ServerClass
 Server.__index = Server
 
@@ -42,7 +49,7 @@ function Server:loadService(moduleInstance: ModuleScript): nil
 		"Path is not a ModuleScript"
 	)
 
-	local service: redTypes.ServerService = require(moduleInstance)
+	local service = require(moduleInstance) :: any
 
 	assert(service.name, "Service does not have a name")
 	assert(service._redService, "Service is not a red service")
@@ -52,18 +59,20 @@ function Server:loadService(moduleInstance: ModuleScript): nil
 	-- Iterate through service and format action names
 	-- to include the controller name
 	-- and capitalize all characters
-	for key, reducer in pairs(service) do
-		if typeof(reducer) == "function" and typeof(key) == "string" then
-			local actionType: string = string.upper(service.name) .. "_" .. string.upper(key)
-
-			self:bind(
-				actionType,
-				reducer,
-				typeof(service.private) == "table"
-					and table.find(service.private, actionType) ~= nil -- Check if reducer is private
-					or service.private == true -- Check if all reducers are private
-			)
+	for reducerKey, reducerFn in pairs(service) do
+		if table.find(ignoredReducerKeys, reducerKey) or typeof(reducerFn) ~= "function" or typeof(reducerKey) ~= "string" then
+			continue
 		end
+
+		local actionType: string = string.upper(service.name) .. "_" .. string.upper(reducerKey)
+
+		self:bind(
+			actionType,
+			reducerFn,
+			typeof(service.private) == "table"
+				and table.find(service.private, actionType) ~= nil -- Check if reducer is private
+				or service.private == true -- Check if all reducers are private
+		)
 	end
 
 	return nil
