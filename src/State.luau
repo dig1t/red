@@ -44,14 +44,13 @@ print('state destroyed?', not success) -- expect: true
 
 --!strict
 
-local dLib = require(script.Parent.Parent.dLib)
-local Util = dLib.import("dLib/Util")
-local redTypes = require(script.Parent.redTypes)
+local Util = require(script.Parent.Parent.dLib).Util
+local Types = require(script.Parent.Types)
 
-local State: redTypes.StateClass = {} :: redTypes.StateClass
+local State: Types.StateClass = {} :: Types.StateClass
 State.__index = State
 
-function State.new(initialState: { [any]: any }?): redTypes.State
+function State.new(initialState: { [any]: any }?): Types.StateType
 	if initialState ~= nil then
 		assert(typeof(initialState) == "table", "Expected initialState to be a table")
 	end
@@ -64,7 +63,7 @@ function State.new(initialState: { [any]: any }?): redTypes.State
 
 	self._context = initialState or {}
 	self._listeners = {} :: {
-		[redTypes.SubscriptionId]: (prevState: any, newState: any) -> nil
+		[Types.SubscriptionId]: (prevState: any, newState: any) -> nil
 	}
 
 	return self
@@ -76,6 +75,10 @@ function State:length(): number
 end
 
 function State:get(path: string | boolean): any -- Todo: support for nested tables
+	if not self._context then
+		return nil
+	end
+
 	if typeof(path) == "number" then
 		return self._context[path] -- Return the index, if exists
 	end
@@ -84,18 +87,26 @@ function State:get(path: string | boolean): any -- Todo: support for nested tabl
 		or Util.treePath(self._context, path, ".") -- return the value at the path
 end
 
-function State:listen(callback: (prevState: any, newState: any) -> nil): redTypes.SubscriptionId
+function State:listen(callback: (prevState: any, newState: any) -> nil): Types.SubscriptionId?
+	if not self._listeners then
+		return nil
+	end
+
 	assert(typeof(callback) == "function", "Callback argument must be a function")
 
 	-- Unique reference ID used for unsubscribing
-	local subscriptionId: redTypes.SubscriptionId = Util.randomString(8)
+	local subscriptionId: Types.SubscriptionId = Util.randomString(8)
 
 	self._listeners[subscriptionId] = callback
 
 	return subscriptionId
 end
 
-function State:unlisten(subscriptionId: redTypes.SubscriptionId): nil
+function State:unlisten(subscriptionId: Types.SubscriptionId): nil
+	if not self._listeners then
+		return nil
+	end
+
 	assert(self._listeners[subscriptionId], "State listener does not exist")
 
 	self._listeners[subscriptionId] = nil
@@ -104,6 +115,10 @@ function State:unlisten(subscriptionId: redTypes.SubscriptionId): nil
 end
 
 function State:pushUpdates(prevState: any, newState: any): nil
+	if not self._context or not self._listeners then
+		return
+	end
+
 	local _newState = newState or self._context
 
 	for _, callback in pairs(self._listeners) do
@@ -114,6 +129,10 @@ function State:pushUpdates(prevState: any, newState: any): nil
 end
 
 function State:push(a: any, b: any): any
+	if not self._context then
+		return nil
+	end
+
 	local prevState = Util.extend({}, self._context) -- Create a 1 level copy // TODO: change to deep copy
 	local key = b ~= nil and a or #self._context + 1
 
@@ -133,6 +152,10 @@ function State:reset(): nil
 end
 
 function State:set(newState: any, value: any): nil
+	if not self._context then
+		return nil
+	end
+
 	local prevState = Util.extend({}, self._context) -- Create a local copy // TODO: change to deep copy
 
 	if typeof(newState) == "function" then
@@ -155,6 +178,10 @@ function State:set(newState: any, value: any): nil
 		local path = Util.split(newState, ".", true)
 		local res = self._context
 
+		if not res then
+			return nil
+		end
+
 		-- Go through nest until the last nest level is reached
 		for i, childName in ipairs(path) do
 			local numberIndex = tonumber(childName)
@@ -174,8 +201,7 @@ function State:set(newState: any, value: any): nil
 		end
 	else
 		warn("No valid state setter was given")
-
-		return
+		return nil
 	end
 
 	self:pushUpdates(prevState)
@@ -185,9 +211,12 @@ end
 
 function State:remove(path: string): nil
 	local prevState = Util.extend({}, self._context) -- Create a local copy
-
 	local treePath = Util.split(path, ".", true)
 	local res = self._context
+
+	if not res then
+		return nil
+	end
 
 	-- Dig through nest until the last nest level is reached
 	for i, childName in ipairs(treePath) do
@@ -216,7 +245,7 @@ function State:destroy(): nil
 	self._context = nil
 	self._listeners = nil
 
-	setmetatable(self, nil)
+	setmetatable(self, {})
 
 	return nil
 end

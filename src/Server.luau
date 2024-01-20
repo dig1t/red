@@ -1,6 +1,6 @@
 --!strict
 
-local redTypes = require(script.Parent.redTypes)
+local Types = require(script.Parent.Types)
 local redUtil = require(script.Parent.redUtil)
 
 local remotes = redUtil.getRemotes()
@@ -12,10 +12,10 @@ local ignoredReducerKeys = {
 	"private"
 }
 
-local Server: redTypes.ServerClass = {} :: redTypes.ServerClass
+local Server: Types.ServerClass = {} :: Types.ServerClass
 Server.__index = Server
 
-function Server.new(): redTypes.Server
+function Server.new(): Types.ServerType
 	local self = setmetatable({}, Server)
 
 	self._reducers = {}
@@ -96,9 +96,9 @@ function Server:localCall(actionType, ...): any
 	)
 
 	local serviceName: string = string.lower(string.split(actionType, "_")[1])
-	local service: redTypes.ServerService = self._services[serviceName]
+	local service: Types.ServiceType = self._services[serviceName]
 
-	local success: boolean, res: redTypes.Action = pcall(
+	local success: boolean, res: Types.Action = pcall(
 		self._reducers[actionType] or self._privateReducers[actionType], service, ...
 	)
 
@@ -113,7 +113,7 @@ function Server:localCall(actionType, ...): any
 	return res
 end
 
-function Server:_call(action: redTypes.Action, player: Player?): any
+function Server:_call(action: Types.Action, player: Player?): any
 	assert(action and typeof(action.type) == "string", "Action type must be a string")
 
 	if not (self._reducers[action.type] or self._privateReducers[action.type]) then
@@ -140,11 +140,11 @@ function Server:_call(action: redTypes.Action, player: Player?): any
 	end
 
 	local serviceName: string = string.lower(string.split(action.type, "_")[1])
-	local service: redTypes.ServerService = self._services[serviceName]
+	local service: Types.ServiceType = self._services[serviceName]
 
 	service.name = serviceName
 
-	local success: boolean, res: redTypes.Action | string = pcall(
+	local success: boolean, res: Types.Action | string = pcall(
 		self._reducers[action.type] or self._privateReducers[action.type],
 		service,
 		args[1], -- TODO: ??
@@ -168,7 +168,7 @@ function Server:_call(action: redTypes.Action, player: Player?): any
 			type = action.type,
 			err = typeof(res) == "string" and res or nil,
 			success = false
-		} :: redTypes.Action
+		} :: Types.Action
 	end
 
 	-- Add a success property to the action
@@ -199,14 +199,14 @@ function Server:init(): nil
 	-- Hook listeners
 
 	-- store:dispatch() called from client
-	remotes.Client.OnServerEvent:Connect(function(player: Player, action: redTypes.Action)
+	remotes.Client.OnServerEvent:Connect(function(player: Player, action: Types.Action)
 		if action.method and action.method == "get_result" then
 			return
 		end
 
 		action.player = player
 
-		local res: redTypes.Action = self:_call(action, player)
+		local res: Types.Action = self:_call(action, player)
 
 		if not res then
 			return
@@ -232,7 +232,7 @@ function Server:init(): nil
 	end)
 
 	-- store:dispatch() called from server
-	remotes.Server.Event:Connect(function(action: redTypes.Action)
+	remotes.Server.Event:Connect(function(action: Types.Action)
 		if action.method and action.method == "get_result" then
 			-- Ignore actions with get_result methods, these will
 			-- always be routed back into this listener

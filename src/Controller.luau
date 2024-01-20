@@ -6,19 +6,19 @@
 
 -- Controller methods
 -- @method init: () -> nil - Called when the controller is initialized
--- @method subscribe: (action: redTypes.Action) -> nil - Called when a red action is dispatched
+-- @method subscribe: (action: Types.Action) -> nil - Called when a red action is dispatched
 -- @method stepped: (deltaTime: number) -> nil - Called every frame
 -- @method destroy: () -> nil - Destroys the controller
 
 -- Controller config
 -- @param name: string - The name of the controller
 -- @param init: () -> nil - Called when the controller is initialized
--- @param subscribe: (action: redTypes.Action) -> nil - Called when a red action is dispatched
+-- @param subscribe: (action: Types.Action) -> nil - Called when a red action is dispatched
 -- @param stepped: (deltaTime: number) -> nil - Called every frame
 
 -- Controller functions
--- @function Controller.new: (config: redTypes.ControllerConfig) -> redTypes.ControllerType - Creates a new controller
--- @function Controller.get: (name: string) -> redTypes.ControllerType - Gets a controller by name
+-- @function Controller.new: (config: Types.ControllerConfig) -> Types.ControllerType - Creates a new controller
+-- @function Controller.get: (name: string) -> Types.ControllerType - Gets a controller by name
 -- @function Controller.addModules: (_controllers: Instance | { ModuleScript }) -> nil - Adds controller ModuleScripts from a folder or table
 -- @function Controller.start: () -> nil - Calls the ready method on all controllers
 
@@ -49,21 +49,21 @@ local RunService = game:GetService("RunService")
 
 local dLib = require(script.Parent.Parent.dLib)
 local Store = require(script.Parent.Store)
-local redTypes = require(script.Parent.redTypes)
+local Types = require(script.Parent.Types)
 
-local Util = dLib.import("dLib/Util")
+local Util = dLib.Util
 
-local Controller: redTypes.ControllerClass = {} :: redTypes.ControllerClass
+local Controller: Types.ControllerClass = {} :: Types.ControllerClass
 Controller.__index = Controller
 
 local store = Store.new()
 
-local controllers: { [string]: redTypes.ControllerType } = {}
+local controllers: { [string]: Types.ControllerType } = {}
 local storeSubscriptions: { [number]: string } = {}
 
-local _subscriptionId: string = store:subscribe(function(action: redTypes.Action)
+local _subscriptionId: string = store:subscribe(function(action: Types.Action)
 	for _, controllerId: string in pairs(storeSubscriptions) do
-		local controller: redTypes.ControllerType = controllers[controllerId]
+		local controller: Types.ControllerType = controllers[controllerId]
 
 		if controller and controller.subscribe then
 			controller:subscribe(action)
@@ -72,14 +72,14 @@ local _subscriptionId: string = store:subscribe(function(action: redTypes.Action
 end)
 
 RunService.Stepped:Connect(function(deltaTime)
-	for _, controller: redTypes.ControllerType in pairs(controllers) do
+	for _, controller: Types.ControllerType in pairs(controllers) do
 		if controller.stepped then
 			controller:stepped(deltaTime)
 		end
 	end
 end)
 
-function Controller.new(config: redTypes.ControllerConfig): redTypes.ControllerType
+function Controller.new(config: Types.ControllerConfig): Types.ControllerType
 	assert(typeof(config) == "table", "Expected config to be a table")
 	assert(typeof(config.name) == "string", "Expected config.name to be a string")
 	assert(
@@ -149,7 +149,7 @@ function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix
 	end
 
 	for _, module: ModuleScript in pairs(modules) do
-		local newController: redTypes.ControllerType = require(module)
+		local newController: Types.ControllerType = require(module)
 
 		if newController.init then
 			assert(typeof(newController.init) == "function", "Expected controller.init to be a function")
@@ -171,7 +171,7 @@ function Controller.addModules(_controllers: Instance | { ModuleScript }, suffix
 end
 
 function Controller.start(): nil
-	for _, controller: redTypes.ControllerType in pairs(controllers) do
+	for _, controller: Types.ControllerType in pairs(controllers) do
 		if controller.ready then
 			assert(typeof(controller.ready) == "function", "Expected controller.ready to be a function")
 
@@ -185,7 +185,7 @@ function Controller.start(): nil
 	return nil
 end
 
-function Controller.get(name: string): redTypes.ControllerType
+function Controller.get(name: string): Types.ControllerType
 	if not controllers[name] then
 		warn("Controller with name " .. name .. " does not exist")
 	end

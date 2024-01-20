@@ -1,6 +1,6 @@
 --!strict
 
-local redTypes = require(script.redTypes)
+local Types = require(script.Types)
 local redUtil = require(script.redUtil)
 
 local red = {}
@@ -15,25 +15,25 @@ red.Controller = require(script.Controller)
 
 export type SubscriptionId = string
 
-export type ActionPayload = redTypes.ActionPayload
-export type Action = redTypes.Action
+export type ActionPayload = Types.ActionPayload
+export type Action = Types.Action
 
-export type StateClass = redTypes.StateClass
-export type StateInstance = redTypes.StateInstance
-export type StateType = redTypes.State
+export type StateClass = Types.StateClass
+export type StateInstance = Types.StateInstance
+export type StateType = Types.State
 
-export type ServerClass = redTypes.ServerClass
-export type ServerInstance = redTypes.ServerInstance
-export type ServerType = redTypes.Server
+export type ServerClass = Types.ServerClass
+export type ServerInstance = Types.ServerInstance
+export type ServerType = Types.Server
 
-export type ServerServiceConfig = redTypes.ServerServiceConfig
-export type ServerServiceClass = redTypes.ServerServiceClass
-export type ServerServiceInstance = redTypes.ServerServiceInstance
-export type ServerService = redTypes.ServerService
+export type ServerServiceConfig = Types.ServerServiceConfig
+export type ServerServiceClass = Types.ServerServiceClass
+export type ServerServiceInstance = Types.ServerServiceInstance
+export type ServerService = Types.ServerService
 
-export type ControllerConfig = redTypes.ControllerConfig
-export type ControllerClass = redTypes.ControllerClass
-export type ControllerInstance = redTypes.ControllerInstance
-export type ControllerType = redTypes.ControllerType
+export type ControllerConfig = Types.ControllerConfig
+export type ControllerClass = Types.ControllerClass
+export type ControllerInstance = Types.ControllerInstance
+export type ControllerType = Types.ControllerType
 
 return red

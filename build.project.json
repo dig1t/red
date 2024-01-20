@@ -1,0 +1,34 @@
+{
+  "name": "red Dev",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+
+      "Packages": {
+        "$className": "Folder",
+
+        "red": {
+          "$path": "src"
+        },
+
+        "dLib": {
+          "$path": "modules/dlib"
+        }
+      },
+
+      "TestEZ": {
+        "$path": "modules/testez"
+      }
+	  },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+
+      "ServerSample": {
+        "$path": "sample"
+      }
+    }
+  }
+}
