@@ -9,4 +9,4 @@ include = ["src", "src/**", "wally.toml", "default.project.json"]
 exclude = ["**"]
 
 [dependencies]
-dLib = "dig1t/dlib@1.1.20"
+dLib = "dig1t/dlib@1.1.21"
