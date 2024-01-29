@@ -9,9 +9,6 @@
     "build:docs": "moonwave build",
     "build": "npm run build:dependencies && npm run build:rojo",
 
-    "test:run": "run-in-roblox --place dev-build.rbxl --script runners/test.lua",
-    "test": "npm run build && npm run test:run",
-
     "dev": "npm run build && dev-build.rbxl && npm start",
     "start": "rojo serve build.project.json"
   },

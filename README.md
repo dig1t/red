@@ -1,5 +1,4 @@
 [![CI](https://github.com/dig1t/red/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dig1t/red/actions/workflows/ci.yml)
-[![Coverage Status](https://coveralls.io/repos/github/dig1t/red/badge.svg?branch=main)](https://coveralls.io/github/dig1t/red?branch=main)
 
 # Installing
 ## wally

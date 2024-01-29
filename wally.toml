@@ -5,8 +5,8 @@ license = "Apache-2.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
-include = ["src", "src/**", "wally.toml", "default.project.json"]
-exclude = ["**"]
+include = ["src", "default.project.json"]
+exclude = ["src/**/*.spec.luau"]
 
 [dependencies]
-dLib = "dig1t/dlib@1.1.22"
+dLib = "dig1t/dlib@1.2.0"
