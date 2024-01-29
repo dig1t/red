@@ -9,4 +9,4 @@ include = ["src", "default.project.json"]
 exclude = ["src/**/*.spec.luau"]
 
 [dependencies]
-dLib = "dig1t/dlib@1.2.0"
+dLib = "dig1t/dlib@1.2.1"
