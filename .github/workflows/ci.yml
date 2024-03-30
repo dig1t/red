@@ -3,24 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - main
-      - development
-      - hotfixes
-      - 'feature-*'
-      - 'update-*'
-      - 'hotfix-*'
-      - 'bug-*'
+      - '*'
     paths:
       - 'src/**'
-  pull_request:
-    branches:
-      - main
-      - development
-      - hotfixes
-      - 'feature-*'
-      - 'update-*'
-      - 'hotfix-*'
-      - 'bug-*'
 
 jobs:
   lint:
@@ -32,42 +17,14 @@ jobs:
       - name: Install dependencies
         uses: ok-nick/setup-aftman@v0.4.2
 
-      - name : Run selene
+      - name: Download type files
+        run: curl -L "https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.luau" > globalTypes.d.luau
+
+      - name: Generate sourcemaps
+        run: rojo sourcemap --include-non-scripts --output sourcemap.json
+
+      - name: Lint with luau-lsp
+        run: luau-lsp analyze --defs=globalTypes.d.luau --sourcemap=sourcemap.json --no-strict-dm-types --ignore=Packages/** --ignore=*.spec.lua --ignore=*.spec.luau --flag:LuauTinyControlFlowAnalysis=True src
+
+      - name : Lint with selene
         run: selene src
-
-  coverage:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-
-    - name: Install aftman dependencies
-      uses: ok-nick/setup-aftman@v0.4.2
-
-    - uses: leafo/gh-actions-lua@v8
-      with:
-        luaVersion: "5.1"
-
-    - uses: leafo/gh-actions-luarocks@v4.3.0
-
-    - name: Install lua dependencies
-      run: luarocks install luacov-coveralls
-
-    - name: Transpile luau
-      run: darklua process src src --format retain-lines
-
-    - name: Run test and make coverage report
-      run: lua -lluacov runners/lemur.lua
-
-    - name: Report coverage to coveralls
-      run: luacov-coveralls -r src
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}

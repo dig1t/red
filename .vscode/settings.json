@@ -1,21 +1,33 @@
 {
+  "luau-lsp.diagnostics.workspace": true,
   "luau-lsp.require.mode": "relativeToFile",
-	"luau-lsp.sourcemap.rojoProjectFile": "default.project.json",
+  "luau-lsp.sourcemap.autogenerate": true,
+  "luau-lsp.sourcemap.enabled": true,
+  "luau-lsp.sourcemap.rojoProjectFile": "default.project.json",
   "luau-lsp.types.definitionFiles": ["testez.d.lua"],
+  "luau-lsp.ignoreGlobs": [
+    "**/_Index/**",
+    "*.d.lua"
+  ],
+
+  "testez-companion.runTestsOnSave": true,
 
   "[lua]": {
-		"editor.defaultFormatter": "EditorConfig.EditorConfig",
-		"editor.formatOnSave": true
-	},
+    "editor.defaultFormatter": "EditorConfig.EditorConfig",
+    "editor.formatOnSave": true
+  },
 
-	"[luau]": {
-		"editor.defaultFormatter": "EditorConfig.EditorConfig",
-		"editor.formatOnSave": true
-	},
+  "[luau]": {
+    "editor.defaultFormatter": "EditorConfig.EditorConfig",
+    "editor.formatOnSave": true
+  },
 
   "files.exclude": {
     //"Packages": true,
+    "build": true,
+    "placeAssets": true,
     "node_modules": true,
+    "test-build.rbxl": true,
     "dev-build.rbxl": true,
     "modules/*/*": true // only show that the submodules folder exists
   },
@@ -24,11 +36,13 @@
   "terminal.integrated.scrollback": 10000,
   "git.autoRepositoryDetection": "openEditors",
 
-  // Configure todo-tree to exclude node_modules, dist, and compiled.
+  "todo-tree.regex.regex": "--\\[\\[[\\s|\\n|\\r]*($TAGS)[\\s|\\n|\\r]*\\]\\]|--\\s*($TAGS)",
+
   "todo-tree.filtering.excludeGlobs": [
-    "Packages",
-    "node_modules",
-    "modules"
+    "**/Packages/**",
+    "placeAssets",
+    "**/node_modules/**",
+    "**/modules/**"
   ],
 
   "todo-tree.highlights.defaultHighlight": {

@@ -3,17 +3,16 @@
 name: Release package
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'version.txt'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-
-    outputs:
-      TAG_NAME: ${{ steps.update-files.outputs.handle }}
-      REPO_NAME: ${{ steps.update-files.outputs.handle }}
-      UPLOAD_URL: ${{ steps.update-files.outputs.handle }}
 
     steps:
       - name: Checkout
@@ -28,68 +27,81 @@ jobs:
         with:
           node-version: 20
 
+      - name: Get version
+        id: version
+        uses: actions/github-script@0.3.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const core = require('@actions/core')
+            const fs = require('fs');
+            const version = fs.readFileSync('${{ github.workspace }}/version.txt', 'utf8')
+            core.setOutput('version', version);
+            console.log(version)
+
       - name: Update files with new version
         id: update-files
         shell: bash
         run: |
-          TAG_NAME=${{ github.event.release.tag_name }}
-          RELEASE_ID=${{ github.event.release.id }}
-          UPLOAD_URL=${{ github.event.release.upload_url }}
-          REPO_OWNER=${{ github.repository_owner }}
-
-          forward_repo_pattern="${REPO_OWNER}/"
-          empty_str=""
-          repo=${{github.repository}}
-          REPO_NAME=${repo/${forward_repo_pattern}/${empty_str}}
-
-          goal_version_str=${TAG_NAME#v}
-
           # read wally.toml file
-          wally_toml_contents=$(<wally.toml)
+          wallyTOMLContents=$(<wally.toml)
 
           # swap out name
-          target_name_line=$(echo "$wally_toml_contents" | grep -F "name = ")
-          goal_name_line="name = \"${REPO_OWNER}/${REPO_NAME}\""
-          wally_toml_contents="${wally_toml_contents/${target_name_line}/${goal_name_line}}"
+          targetNameLine=$(echo "$wallyTOMLContents" | grep -F "name = ")
+          goalNameLine="name = \"${{github.repository}}\""
+          wallyTOMLContents="${wallyTOMLContents/${targetNameLine}/${goalNameLine}}"
 
           # swap out version
-          target_version_line=$(echo "$wally_toml_contents" | grep -F "version = ")
-          goal_version_line="version = \"${goal_version_str#v}\""
-          wally_toml_contents="${wally_toml_contents/${target_version_line}/${goal_version_line}}"
+          targetVersionLine=$(echo "$wallyTOMLContents" | grep -F "version = ")
+          goalVersionLine="version = \"${{ steps.version.outputs.version }}\""
+          wallyTOMLContents="${wallyTOMLContents/${targetVersionLine}/${goalVersionLine}}"
 
           # update wally.toml file
-          echo "$wally_toml_contents" > wally.toml
+          echo "$wallyTOMLContents" > wally.toml
 
           # read package.json file
-          default_json_contents=$(<package.json)
-          target_json_version_line=$(echo "$default_json_contents" | grep -F "\"version\": ")
-          goal_json_version_line="  \"version\": \"${goal_version_str#v}\","
-          default_json_contents="${default_json_contents/${target_json_version_line}/${goal_json_version_line}}"
+          defaultJSONContents=$(<package.json)
+          targetJSONVersionLine=$(echo "$defaultJSONContents" | grep -F "\"version\": ")
+          goalJSONVersionLine="  \"version\": \"${{ steps.version.outputs.version }}\","
+          defaultJSONContents="${defaultJSONContents/${targetJSONVersionLine}/${goalJSONVersionLine}}"
 
           # update package.json file
-          echo "$default_json_contents" > package.json
+          echo "$defaultJSONContents" > package.json
 
           # read README.md file
-          readme_contents=$(<README.md)
-          target_readme_version_line=$(echo "$readme_contents" | grep -F "${REPO_NAME} = \"")
-          goal_readme_version_line="${REPO_NAME} = \"${REPO_OWNER}/${REPO_NAME}@${goal_version_str#v}\""
-          readme_contents="${readme_contents/${target_readme_version_line}/${goal_readme_version_line}}"
+          readmeContents=$(<README.md)
+          targetReadmeVersionLine=$(echo "$readmeContents" | grep -F "${{ github.event.repository.name }} = \"")
+          goalReadmeVersionLine="${{ github.event.repository.name }} = \"${{github.repository}}@${{ steps.version.outputs.version }}\""
+          readmeContents="${readmeContents/${targetReadmeVersionLine}/${goalReadmeVersionLine}}"
 
           # update README.md file
-          echo "$readme_contents" > README.md
-
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
-          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_OUTPUT
-          echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_OUTPUT
+          echo "$readmeContents" > README.md
 
       - name: Commit files with new version
+        id: commit-files
         run: |
+          # Commit version update
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git add --all
-          git commit -m "Update to ${{ steps.update-files.outputs.TAG_NAME }}"
-          git push -u origin main --force-with-lease
+          git commit -m "Update to v${{ steps.version.outputs.version }}"
+          git push -u origin main --force-with-lease || true
+
+          COMMIT_SHA=$(git rev-parse HEAD)
+
           echo "Committed changes"
+          echo "commitSHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
+
+      # Create GitHub release
+      - name: Create ${{ steps.version.outputs.version }} Runner Release
+        uses: actions/create-release@master
+        id: createRelease
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "v${{ steps.version.outputs.version }}"
+          release_name: "v${{ steps.version.outputs.version }}"
+          commitish: ${{ steps.commit-files.outputs.commitSHA }}
 
       - name: Install aftman dependencies
         uses: ok-nick/setup-aftman@v0.4.2
@@ -108,14 +120,14 @@ jobs:
           wally publish
 
       - name: Build package place file
-        run: rojo build -o ${{ steps.update-files.outputs.REPO_NAME }}.rbxl build.project.json
+        run: rojo build -o ${{ github.event.repository.name }}.rbxl build.project.json
 
       - name: Upload Roblox level file to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.update-files.outputs.UPLOAD_URL }}
-          asset_path: ${{ steps.update-files.outputs.REPO_NAME }}.rbxl
-          asset_name: ${{ steps.update-files.outputs.REPO_NAME }}.rbxl
+          upload_url: ${{ steps.createRelease.outputs.upload_url }}
+          asset_path: ${{ github.event.repository.name }}.rbxl
+          asset_name: ${{ github.event.repository.name }}.rbxl
           asset_content_type: application/octet-stream
