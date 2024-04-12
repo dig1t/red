@@ -2,3 +2,7 @@
 	path = modules/dlib
 	url = https://github.com/dig1t/dlib.git
 	branch = main
+[submodule "modules/testez"]
+	path = modules/testez
+	url = https://github.com/Roblox/testez.git
+	branch = master
