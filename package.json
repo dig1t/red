@@ -1,6 +1,6 @@
 {
   "name": "red",
-  "version": "1.2.8",
+  "version": "1.2.9",
   "description": "Simplified server-to-client, client-to-server, and server-to-server communication",
   "main": "src/init.luau",
   "scripts": {
