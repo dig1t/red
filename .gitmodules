@@ -5,4 +5,3 @@
 [submodule "modules/testez"]
 	path = modules/testez
 	url = https://github.com/Roblox/testez.git
-	branch = master
