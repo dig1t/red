@@ -47,11 +47,9 @@ end)
 
 local RunService = game:GetService("RunService")
 
-local dLib = require(script.Parent.Parent.dLib)
 local Store = require(script.Parent.Store)
 local redTypes = require(script.Parent.redTypes)
-
-local Util = dLib.import("dLib/Util")
+local Util = require(script.Parent.Parent.Util)
 
 local Controller = {}
 

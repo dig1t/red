@@ -8,18 +8,11 @@
 
       "Packages": {
         "$className": "Folder",
+        "$path": "Packages",
 
         "red": {
           "$path": "src"
-        },
-
-        "dLib": {
-          "$path": "modules/dlib"
         }
-      },
-
-      "TestEZ": {
-        "$path": "modules/testez"
       }
 	  },
 

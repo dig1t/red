@@ -44,8 +44,7 @@ print('state destroyed?', not success) -- expect: true
 
 --!strict
 
-local dLib = require(script.Parent.Parent.dLib)
-local Util = dLib.import("dLib/Util")
+local Util = require(script.Parent.Parent.Util)
 local redTypes = require(script.Parent.redTypes)
 
 local State = {}
