@@ -11,6 +11,9 @@ local Promise = require(script.Parent.Parent.Promise)
 local remotes: Folder = redUtil.getRemotes()
 local isServer: boolean = RunService:IsServer()
 
+local ClientRemote = remotes:WaitForChild("Client") :: RemoteEvent
+local ServerRemote = remotes:WaitForChild("Server") :: BindableEvent
+
 local Store = {}
 Store.__index = Store
 
@@ -29,7 +32,7 @@ end
 	@param player|boolean arg[1] - determines who receives the action event (optional)
 	@param object action arg[1]|arg[2] - action
 ]]--
-function Store:dispatch(...): nil
+function Store:dispatch(...): ()
 	local args = { ... }
 
 	local action: redTypes.Action = #args == 1 and args[1] or args[2]
@@ -57,9 +60,9 @@ function Store:dispatch(...): nil
 	-- From either the client (client-to-server) or the server (server-to-server)
 	if #args == 1 then
 		if isServer then
-			remotes.Server:Fire(action)
+			ServerRemote:Fire(action)
 		else
-			remotes.Client:FireServer(action)
+			ClientRemote:FireServer(action)
 		end
 
 	-- If a recipient is specified, then
@@ -71,14 +74,14 @@ function Store:dispatch(...): nil
 
 		if recipient and not fireToAll then
 			if typeof(recipient) == "Instance" and recipient:IsA("Player") then
-				remotes.Client:FireClient(recipient, action)
+				ClientRemote:FireClient(recipient, action)
 			elseif typeof(recipient) == "table" then
 				for _, player in pairs(recipient) do
-					remotes.Client:FireClient(player, action)
+					ClientRemote:FireClient(player, action)
 				end
 			end
 		elseif fireToAll then
-			remotes.Client:FireAllClients(action)
+			ClientRemote:FireAllClients(action)
 		elseif self.error then
 			warn("Store - could not dispatch action" .. action.type) -- Convert to error handler (?)
 		end
@@ -106,7 +109,7 @@ function Store:get(action: redTypes.Action): any
 
 	local promise = Promise.new(function(resolve, _reject)
 		if isServer then
-			connections[#connections + 1] = remotes.Client.OnServerEvent:Connect(function(player: Player, _action: redTypes.Action)
+			connections[#connections + 1] = ClientRemote.OnServerEvent:Connect(function(player: Player, _action: redTypes.Action)
 				-- From client
 				_action.player = player
 
@@ -114,14 +117,14 @@ function Store:get(action: redTypes.Action): any
 					resolve(_action)
 				end
 			end)
-			connections[#connections + 1] = remotes.Server.Event:Connect(function(_action: redTypes.Action)
+			connections[#connections + 1] = ServerRemote.Event:Connect(function(_action: redTypes.Action)
 				-- From server
 				if _action.method == "get_result" and _action.uid == uid then
 					resolve(_action)
 				end
 			end)
 		else
-			connections[#connections + 1] = remotes.Client.OnClientEvent:Connect(function(_action: redTypes.Action)
+			connections[#connections + 1] = ClientRemote.OnClientEvent:Connect(function(_action: redTypes.Action)
 				-- From server
 				if _action.method == "get_result" and _action.uid == uid then
 					resolve(_action)
@@ -183,7 +186,7 @@ function Store:subscribe(fn: () -> nil): redTypes.SubscriptionId
 
 		if isServer then
 			-- From client
-			self._connections[#self._connections + 1] = remotes.Client.OnServerEvent:Connect(
+			self._connections[#self._connections + 1] = ClientRemote.OnServerEvent:Connect(
 				function(player: Player, action: redTypes.Action)
 					action.player = player
 
@@ -192,16 +195,16 @@ function Store:subscribe(fn: () -> nil): redTypes.SubscriptionId
 			)
 
 			-- From server
-			self._connections[#self._connections + 1] = remotes.Server.Event:Connect(
+			self._connections[#self._connections + 1] = ServerRemote.Event:Connect(
 				function(action: redTypes.Action)
 					self:_callSubscribers(action, true)
 				end
 			)
 		else
 			-- From client
-			self._connections[#self._connections + 1] = remotes.Client.OnClientEvent:Connect(
+			self._connections[#self._connections + 1] = ClientRemote.OnClientEvent:Connect(
 				function(action: redTypes.Action)
-					self:_callSubscribers(action)
+					self:_callSubscribers(action, false)
 				end
 			)
 		end
@@ -212,7 +215,7 @@ function Store:subscribe(fn: () -> nil): redTypes.SubscriptionId
 	return id
 end
 
-function Store:unsubscribe(id: redTypes.SubscriptionId): nil
+function Store:unsubscribe(id: redTypes.SubscriptionId): ()
 	assert(self._subscribers[id], "Store:unsubscribe() - Event listener id does not exist")
 
 	self._subscribers[id] = nil
