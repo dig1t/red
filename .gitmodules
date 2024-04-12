@@ -1,0 +1,4 @@
+[submodule "modules/dlib"]
+	path = modules/dlib
+	url = https://github.com/dig1t/dlib.git
+	branch = main

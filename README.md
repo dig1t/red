@@ -1,11 +1,10 @@
 [![CI](https://github.com/dig1t/red/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dig1t/red/actions/workflows/ci.yml)
-[![Coverage Status](https://coveralls.io/repos/github/dig1t/red/badge.svg?branch=main)](https://coveralls.io/github/dig1t/red?branch=main)
 
 # Installing
 ## wally
 Add the below line to your wally.toml file
 ```toml
-red = "dig1t/red@1.4.0"
+red = "dig1t/red@1.3.11"
 ```
 ## Roblox Studio
 Download the rbxl file from the [releases](https://github.com/dig1t/red/releases) tab.

@@ -1,16 +1,16 @@
 {
   "luau-lsp.diagnostics.workspace": true,
-  "luau-lsp.require.mode": "relativeToFile",
+  "luau-lsp.require.mode": "relativeToWorkspaceRoot",
   "luau-lsp.sourcemap.autogenerate": true,
   "luau-lsp.sourcemap.enabled": true,
-  "luau-lsp.sourcemap.rojoProjectFile": "default.project.json",
+  "luau-lsp.sourcemap.rojoProjectFile": "build.project.json",
   "luau-lsp.types.definitionFiles": ["testez.d.lua"],
   "luau-lsp.ignoreGlobs": [
     "**/_Index/**",
     "*.d.lua"
   ],
 
-  "testez-companion.runTestsOnSave": true,
+  // "testez-companion.runTestsOnSave": true,
 
   "[lua]": {
     "editor.defaultFormatter": "EditorConfig.EditorConfig",
@@ -25,11 +25,8 @@
   "files.exclude": {
     //"Packages": true,
     "build": true,
-    "placeAssets": true,
     "node_modules": true,
-    "test-build.rbxl": true,
-    "dev-build.rbxl": true,
-    "modules/*/*": true // only show that the submodules folder exists
+    "dev-build.rbxl": true
   },
 
   // Ensure enough terminal history is preserved when running tests.

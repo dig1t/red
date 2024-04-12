@@ -1,7 +1,7 @@
 --[[
 -- Usage example
 -- Service
-local test = Service.new({
+local test: typeof(Service.ServiceType) = Service.new({
 	name = "test",
 	version = "1.0.0",
 	private = { -- Clients cannot invoke these
@@ -54,12 +54,12 @@ store:dispatch({
 
 --!strict
 
-local redTypes = require(script.Parent.redTypes)
+local Types = require(script.Parent.Types)
 
-local Service = {}
+local Service: Types.ServiceClass = {} :: Types.ServiceClass
 Service.__index = Service
 
-function Service.new(config: redTypes.ServerServiceConfig): redTypes.ServerService
+function Service.new(config: Types.ServiceConfig): Types.ServiceType
 	assert(config, "Config must be provided")
 	assert(typeof(config) == "table", "Config must be a table")
 	assert(config.name, "Config must have a name")

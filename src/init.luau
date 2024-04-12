@@ -1,6 +1,6 @@
 --!strict
 
-local redTypes = require(script.redTypes)
+local Types = require(script.Types)
 local redUtil = require(script.redUtil)
 
 local red = {}
@@ -12,19 +12,28 @@ red.State = require(script.State)
 red.Store = require(script.Store)
 red.Service = require(script.Service)
 red.Controller = require(script.Controller)
-red.Types = redTypes
 
-export type ActionPayload = redTypes.ActionPayload
-export type Action = redTypes.Action
-export type State = redTypes.State
-export type Server = redTypes.Server
-export type ServerServiceConfig = redTypes.ServerServiceConfig
-export type ServerService = redTypes.ServerService
-export type SubscriptionId = redTypes.SubscriptionId
-export type ControllerConfig = redTypes.ControllerConfig
-export type ControllerType = redTypes.ControllerType
+export type SubscriptionId = string
 
--- Alias
-red.redTypes = redTypes
+export type ActionPayload = Types.ActionPayload
+export type Action = Types.Action
+
+export type StateClass = Types.StateClass
+export type StateInstance = Types.StateInstance
+export type StateType = Types.StateType
+
+export type ServerClass = Types.ServerClass
+export type ServerInstance = Types.ServerInstance
+export type ServerType = Types.ServerType
+
+export type ServiceConfig = Types.ServiceConfig
+export type ServiceClass = Types.ServiceClass
+export type ServiceInstance = Types.ServiceInstance
+export type ServiceType = Types.ServiceType
+
+export type ControllerConfig = Types.ControllerConfig
+export type ControllerClass = Types.ControllerClass
+export type ControllerInstance = Types.ControllerInstance
+export type ControllerType = Types.ControllerType
 
 return red

@@ -1,14 +1,21 @@
 --!strict
 
-local redTypes = require(script.Parent.redTypes)
+local Types = require(script.Parent.Types)
 local redUtil = require(script.Parent.redUtil)
 
 local remotes = redUtil.getRemotes()
 
-local Server = {}
+local ignoredReducerKeys = {
+	"init",
+	"_redService",
+	"name",
+	"private"
+}
+
+local Server: Types.ServerClass = {} :: Types.ServerClass
 Server.__index = Server
 
-function Server.new()
+function Server.new(): Types.ServerType
 	local self = setmetatable({}, Server)
 
 	self._reducers = {}
@@ -18,27 +25,31 @@ function Server.new()
 	return self
 end
 
-function Server:bind(actionType: string, reducer: () -> any, private: boolean?)
+function Server:bind(actionType: string, reducer: () -> any, private: boolean?): nil
 	assert(typeof(actionType) == "string", "Action type must be a string")
 	assert(typeof(reducer) == "function", "Action must be a function")
 
 	self[private == true and "_privateReducers" or "_reducers"][actionType] = reducer
+
+	return nil
 end
 
-function Server:unbind(id)
+function Server:unbind(id: string): nil
 	assert(self._reducers[id] or self._privateReducers[id], "Action reducer does not exist")
 
 	self._reducers[id] = nil
 	self._privateReducers[id] = nil
+
+	return nil
 end
 
-function Server:loadService(moduleInstance: ModuleScript)
+function Server:loadService(moduleInstance: ModuleScript): nil
 	assert(
 		typeof(moduleInstance) == "Instance" and moduleInstance:IsA("ModuleScript"),
 		"Path is not a ModuleScript"
 	)
 
-	local service: redTypes.ServerService = require(moduleInstance)
+	local service = require(moduleInstance) :: any
 
 	assert(service.name, "Service does not have a name")
 	assert(service._redService, "Service is not a red service")
@@ -48,30 +59,36 @@ function Server:loadService(moduleInstance: ModuleScript)
 	-- Iterate through service and format action names
 	-- to include the controller name
 	-- and capitalize all characters
-	for key, reducer in pairs(service) do
-		if typeof(reducer) == "function" and typeof(key) == "string" then
-			local actionType: string = string.upper(service.name) .. "_" .. string.upper(key)
-
-			self:bind(
-				actionType,
-				reducer,
-				typeof(service.private) == "table" and
-					table.find(service.private, actionType) ~= nil or -- Check if reducer is private
-					service.private == true -- Check if all reducers are private
-			)
+	for reducerKey, reducerFn in pairs(service) do
+		if table.find(ignoredReducerKeys, reducerKey) or typeof(reducerFn) ~= "function" or typeof(reducerKey) ~= "string" then
+			continue
 		end
+
+		local actionType: string = string.upper(service.name) .. "_" .. string.upper(reducerKey)
+
+		self:bind(
+			actionType,
+			reducerFn,
+			typeof(service.private) == "table"
+				and table.find(service.private, actionType) ~= nil -- Check if reducer is private
+				or service.private == true -- Check if all reducers are private
+		)
 	end
+
+	return nil
 end
 
-function Server:loadServices(services: { ModuleScript })
+function Server:loadServices(services: { ModuleScript }): nil
 	for _, service: ModuleScript in pairs(services) do
 		self:loadService(service)
 	end
+
+	return nil
 end
 
 -- @desc Function for interal use only
 -- Arguments will be interpreted as either (actionType, payload) or (actionType, player, payload)
-function Server:localCall(actionType, ...)
+function Server:localCall(actionType, ...): any
 	assert(typeof(actionType) == "string", "Action type must be a string")
 	assert(
 		self._reducers[actionType] or self._privateReducers[actionType],
@@ -79,9 +96,9 @@ function Server:localCall(actionType, ...)
 	)
 
 	local serviceName: string = string.lower(string.split(actionType, "_")[1])
-	local service: redTypes.ServerService = self._services[serviceName]
+	local service: Types.ServiceType = self._services[serviceName]
 
-	local success: boolean, res: redTypes.Action = pcall(
+	local success: boolean, res: Types.Action = pcall(
 		self._reducers[actionType] or self._privateReducers[actionType], service, ...
 	)
 
@@ -96,7 +113,7 @@ function Server:localCall(actionType, ...)
 	return res
 end
 
-function Server:call(action, player)
+function Server:_call(action: Types.Action, player: Player?): any
 	assert(action and typeof(action.type) == "string", "Action type must be a string")
 
 	if not (self._reducers[action.type] or self._privateReducers[action.type]) then
@@ -109,41 +126,49 @@ function Server:call(action, player)
 
 	local args = {}
 
-	table.insert(
-		args,
-		(player and player:IsA("Player") and player) or
-		(action.player and action.player:IsA("Player") and action.player)
-	) -- Check to make sure the player argument is a valid player
+	local usingPlayerArgument: boolean? = typeof(player) == "Instance" and player:IsA("Player")
+	local usingActionPlayer: boolean? = typeof(action.player) == "Instance" and action.player:IsA("Player")
+
+	local targetPlayer: Player? = (usingPlayerArgument and player)
+		or (usingActionPlayer and action.player)
+		or nil
+
+	table.insert(args, targetPlayer) -- Check to make sure the player argument is a valid player
 
 	if action.payload and typeof(action.payload) == "table" then
-		table.insert(args, action.payload)
+		args[#args + 1] = action.payload :: any
 	end
 
 	local serviceName: string = string.lower(string.split(action.type, "_")[1])
-	local service: redTypes.ServerService = self._services[serviceName]
+	local service: Types.ServiceType = self._services[serviceName]
 
-	local success: boolean, res: redTypes.Action | string = pcall(
+	service.name = serviceName
+
+	local success: boolean, res: Types.Action | string = pcall(
 		self._reducers[action.type] or self._privateReducers[action.type],
 		service,
-		args[1], --// TODO: ??
-		args[2] --// TODO: ??
+		args[1], -- TODO: ??
+		args[2] -- TODO: ??
 	)
 
 	if not success then
 		task.spawn(function()
-			error(
-				res .. (
-					typeof(args[1]) == "Instance" and args[1]:IsA("Player") and (" - UserId: " .. args[1].UserId) or ""
-				),
-				2
-			)
+			local _player = targetPlayer and targetPlayer:IsA("Player") and targetPlayer or nil
+			local userId: number = _player and _player.UserId or 0
+
+			if typeof(res) == "string" then
+				error(
+					res .. (userId and ` - UserId: {userId}` or ""),
+					2
+				)
+			end
 		end)
 
-		res = {
+		return {
 			type = action.type,
-			err = res,
+			err = typeof(res) == "string" and res or nil,
 			success = false
-		} :: redTypes.Action
+		} :: Types.Action
 	end
 
 	-- Add a success property to the action
@@ -151,6 +176,7 @@ function Server:call(action, player)
 		res.success = true
 	elseif not res then
 		res = {
+			type = action.type,
 			success = true
 		}
 	end
@@ -158,24 +184,29 @@ function Server:call(action, player)
 	return res
 end
 
-function Server:init()
+function Server:init(): nil
 	for _, service in pairs(self._services) do
-		if typeof(service.init) == "function" then
-			service:init()
+		if service.init ~= nil then
+			assert(typeof(service.init) == "function", "Expected service.init to be a function")
+
+			task.spawn(function()
+				debug.setmemorycategory(service.name)
+				service:init()
+			end)
 		end
 	end
 
 	-- Hook listeners
 
 	-- store:dispatch() called from client
-	remotes.Client.OnServerEvent:Connect(function(player: Player, action: redTypes.Action)
+	remotes.Client.OnServerEvent:Connect(function(player: Player, action: Types.Action)
 		if action.method and action.method == "get_result" then
 			return
 		end
 
 		action.player = player
 
-		local res: redTypes.Action = self:call(action, player)
+		local res: Types.Action = self:_call(action, player)
 
 		if not res then
 			return
@@ -201,7 +232,7 @@ function Server:init()
 	end)
 
 	-- store:dispatch() called from server
-	remotes.Server.Event:Connect(function(action: redTypes.Action)
+	remotes.Server.Event:Connect(function(action: Types.Action)
 		if action.method and action.method == "get_result" then
 			-- Ignore actions with get_result methods, these will
 			-- always be routed back into this listener
@@ -209,7 +240,7 @@ function Server:init()
 			return
 		end
 
-		local res = self:call(action)
+		local res = self:_call(action)
 
 		if not res then
 			return
@@ -235,6 +266,8 @@ function Server:init()
 	end)
 
 	self.started = true
+
+	return nil
 end
 
 return Server
