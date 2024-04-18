@@ -36,4 +36,8 @@ export type ControllerClass = Types.ControllerClass
 export type ControllerInstance = Types.ControllerInstance
 export type ControllerType = Types.ControllerType
 
+export type StoreClass = Types.StoreClass
+export type StoreInstance = Types.StoreInstance
+export type StoreType = Types.StoreType
+
 return red
