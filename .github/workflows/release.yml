@@ -131,3 +131,6 @@ jobs:
           asset_path: ${{ github.event.repository.name }}.rbxl
           asset_name: ${{ github.event.repository.name }}.rbxl
           asset_content_type: application/octet-stream
+
+      - name: Run docs action
+        uses: ./.github/workflows/docs.yml
