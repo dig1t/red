@@ -1,7 +1,11 @@
---[[
--- Usage example
--- Service
-local test: typeof(Service.ServiceType) = Service.new({
+--[=[
+@class Service
+
+Usage example
+
+### Server
+```lua
+local test: Service.ServiceType = Service.new({
 	name = "test",
 	version = "1.0.0",
 	private = { -- Clients cannot invoke these
@@ -15,32 +19,34 @@ function test:init()
 	print("red has started!")
 end
 
-function test:_privateMethod(player, payload)
+function test:_privateMethod(player: Player, payload: red.ActionPayload)
 	-- this cannot be called from anywhere except this service
 end
 
-function test:ping(player, payload)
+function test:ping(player: Player, payload: red.ActionPayload)
 	store:dispatch(player, {
 		type = "TEST_PONG",
 		payload = {
 			clientTime = payload.clientTime
-			responseTime = tick() - payload.clientTime
+			responseTime = workspace:GetServerTimeNow() - payload.clientTime
 		}
 	})
 end
 
 return test
+```
 
--- Client
+### Client
+```lua
 local store = red.Store.new()
 
-store:subscribe(function(action)
+store:subscribe(function(action: red.Action)
 	if action.type == "TEST_PONG" then
-		local t = tick()
+		local timeNow: number = workspace:GetServerTimeNow()
 
 		print("client to server time: ", action.payload.responseTime)
-		print("server to client time: ", t - (action.payload.responseTime + payload.clientTime))
-		print("client 2 server 2 client time: ", t - action.payload.clientTime)
+		print("server to client time: ", timeNow - (action.payload.responseTime + payload.clientTime))
+		print("client 2 server 2 client time: ", timeNow - action.payload.clientTime)
 	end
 end)
 
@@ -50,16 +56,39 @@ store:dispatch({
 		clientTime = tick()
 	}
 })
-]]
+```
+]=]
 
 --!strict
 
-local Types = require(script.Parent.Types)
-
-local Service: Types.ServiceClass = {} :: Types.ServiceClass
+local Service = {}
 Service.__index = Service
 
-function Service.new(config: Types.ServiceConfig): Types.ServiceType
+export type ServiceConfig = {
+	name: string,
+	private: { string } | boolean?,
+	[any]: any,
+}
+
+export type ServiceType = typeof(setmetatable(
+	{} :: {
+		_redService: true,
+		_services: {
+			[string]: any,
+		},
+		name: string,
+		[any]: any,
+	},
+	Service
+))
+
+--[=[
+	Creates a new service instance
+	
+	@param config ServiceConfig
+	@return ServiceType
+]=]
+function Service.new(config: ServiceConfig): ServiceType
 	assert(config, "Config must be provided")
 	assert(typeof(config) == "table", "Config must be a table")
 	assert(config.name, "Config must have a name")
@@ -71,7 +100,7 @@ function Service.new(config: Types.ServiceConfig): Types.ServiceType
 		)
 	end
 
-	local self = setmetatable(config, Service)
+	local self = setmetatable(config, Service) :: ServiceType
 
 	self._redService = true
 	self._services = {}

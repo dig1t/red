@@ -7,37 +7,33 @@ local red = {}
 
 red.remotes = redUtil.getRemotes()
 
-red.Server = require(script.Server)
-red.State = require(script.State)
-red.Store = require(script.Store)
-red.Service = require(script.Service)
-red.Controller = require(script.Controller)
+local Controller = require(script.Controller)
+local Server = require(script.Server)
+local Service = require(script.Service)
+local State = require(script.State)
+local Store = require(script.Store)
+
+red.Server = Server
+red.State = State
+red.Store = Store
+red.Service = Service
+red.Controller = Controller
 
 export type SubscriptionId = string
 
 export type ActionPayload = Types.ActionPayload
 export type Action = Types.Action
 
-export type StateClass = Types.StateClass
-export type StateInstance = Types.StateInstance
-export type StateType = Types.StateType
+export type StateType = State.StateType
 
-export type ServerClass = Types.ServerClass
-export type ServerInstance = Types.ServerInstance
-export type ServerType = Types.ServerType
+export type ServerType = Server.ServerType
 
-export type ServiceConfig = Types.ServiceConfig
-export type ServiceClass = Types.ServiceClass
-export type ServiceInstance = Types.ServiceInstance
-export type ServiceType = Types.ServiceType
+export type ServiceConfig = Service.ServiceConfig
+export type ServiceType = Service.ServiceType
 
-export type ControllerConfig = Types.ControllerConfig
-export type ControllerClass = Types.ControllerClass
-export type ControllerInstance = Types.ControllerInstance
-export type ControllerType = Types.ControllerType
+export type ControllerConfig = Controller.ControllerConfig
+export type ControllerType = Controller.ControllerType
 
-export type StoreClass = Types.StoreClass
-export type StoreInstance = Types.StoreInstance
-export type StoreType = Types.StoreType
+export type StoreType = Store.StoreType
 
 return red

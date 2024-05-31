@@ -1,4 +1,4 @@
-[![CI](https://github.com/dig1t/red/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dig1t/red/actions/workflows/ci.yml)
+[![Linter](https://github.com/dig1t/red/actions/workflows/linter.yml/badge.svg?branch=main)](https://github.com/dig1t/red/actions/workflows/linter.yml)
 
 # Installing
 ## wally
@@ -323,6 +323,6 @@ state:remove("Player1.weapons.sword")
 
 ## Games powered by red
 
-<a href="https://www.roblox.com/games/4771858173/Survival-Islands"><img width=49% src="https://i.imgur.com/Y9dYTWF.png"></a>
-<a href="https://www.roblox.com/games/4693424588/Zombie-Task-Force"><img width=49% src="https://i.imgur.com/P4U5zls.png"></a>
-<a href="https://www.roblox.com/games/90267357/Murder-Escape"><img width=49% src="https://i.imgur.com/hp4zts7.png"></a>
+<a href="https://www.roblox.com/games/4771858173/Survival-Islands"><img width="49%" src="https://i.imgur.com/Y9dYTWF.png" /></a>
+<a href="https://www.roblox.com/games/4693424588/Zombie-Task-Force"><img width="49%" src="https://i.imgur.com/P4U5zls.png" /></a>
+<a href="https://www.roblox.com/games/90267357/Murder-Escape"><img width="49%" src="https://i.imgur.com/hp4zts7.png" /></a>

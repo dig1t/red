@@ -8,9 +8,8 @@ local Constants = require(script.Parent.Constants)
 local Util = {}
 
 function Util.getRemotes()
-	local remotes = RunService:IsClient() and
-		ReplicatedStorage:WaitForChild(Constants.REMOTE_FOLDER_NAME) or
-		ReplicatedStorage:FindFirstChild(Constants.REMOTE_FOLDER_NAME)
+	local remotes = RunService:IsClient() and ReplicatedStorage:WaitForChild(Constants.REMOTE_FOLDER_NAME)
+		or ReplicatedStorage:FindFirstChild(Constants.REMOTE_FOLDER_NAME)
 
 	if not remotes then
 		-- Container for remotes

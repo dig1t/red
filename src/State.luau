@@ -1,6 +1,9 @@
---[[
--- Usage example
+--[=[
+@class State
 
+Usage example
+
+```lua
 local state = State.new({
 	val = 1,
 	time = tick(),
@@ -39,42 +42,108 @@ local success = pcall(function()
 	state:set("val", 1)
 end)
 
-print('state destroyed?', not success) -- expect: true
-]]
+print("state destroyed:", not success) -- expect: state destroyed: true
+```
+]=]
 
 --!strict
 
-local Util = require(script.Parent.Parent.Util)
 local Types = require(script.Parent.Types)
+local Util = require(script.Parent.Parent.Util)
 
-local State: Types.StateClass = {} :: Types.StateClass
+local State = {}
 State.__index = State
 
-function State.new(initialState: { [any]: any }?): Types.StateType
+export type StateType = typeof(setmetatable(
+	{} :: {
+		_context: { [any]: any }?,
+		_listeners: {
+			[Types.SubscriptionId]: (prevState: any, newState: any) -> nil,
+		}?,
+	},
+	State
+))
+
+--[=[
+	Creates a new state instance
+
+	@param initialState { [any]: any }? -- Initial state values
+	@return StateType
+]=]
+function State.new(initialState: { [any]: any }?): StateType
 	if initialState ~= nil then
 		assert(typeof(initialState) == "table", "Expected initialState to be a table")
 	end
 
-	local self = setmetatable({
-		__index = function(_self, key)
-			return _self._context[key] or _self[key]
-		end
-	}, State)
+	local self = setmetatable(
+		{
+			__index = function(_self, key)
+				return _self._context[key] or _self[key]
+			end,
+		} :: any,
+		State
+	) :: StateType
 
 	self._context = initialState or {}
 	self._listeners = {} :: {
-		[Types.SubscriptionId]: (prevState: any, newState: any) -> nil
+		[Types.SubscriptionId]: (prevState: any, newState: any) -> nil,
 	}
 
 	return self
 end
 
 -- Number of first level children
-function State:length(): number
+
+--[=[
+	Returns the length of the state
+	
+	Example:
+	```lua
+	local state = State.new({
+		val = 1,
+		time = tick(),
+		nest = {
+			val = 123123
+		}
+	})
+	
+	print(state:length()) -- expect 3
+	```
+
+	@within State
+	@method length
+	@return number
+]=]
+function State.length(self: StateType): number
 	return Util.tableLength(self._context)
 end
 
-function State:get(path: string | boolean): any -- Todo: support for nested tables
+--[=[
+	Returns the value at the given path
+
+	Example:
+	```lua
+	local state = State.new({
+		val = 1,
+		time = tick(),
+		nest = {
+			val = 123123
+		}
+	})
+	
+	print(state:get("val")) -- expect 1
+	print(state:get("nest.val")) -- expect 123123
+	
+	-- True as the argument returns the entire state
+	print(state:get(true)) -- expect { val = 1, time = tick(), nest = { val = 123123 } }
+	```
+
+	@within State
+	@method get
+	@param path string | boolean
+	@return any
+]=]
+function State.get(self: StateType, path: string | boolean): any -- Todo: support for nested tables
 	if not self._context then
 		return nil
 	end
@@ -87,9 +156,32 @@ function State:get(path: string | boolean): any -- Todo: support for nested tabl
 		or Util.treePath(self._context, path, ".") -- return the value at the path
 end
 
-function State:listen(callback: (prevState: any, newState: any) -> nil): Types.SubscriptionId?
+--[=[
+	Listens for state changes
+
+	Example:
+	```lua
+	local state = State.new({
+		val = 1,
+		time = tick(),
+		nest = {
+			val = 123123
+		}
+	})
+	
+	state:listen(function(prevState, newState)
+		print(prevState, newState)
+	end)
+	```
+
+	@within State
+	@method listen
+	@param callback (prevState: any, newState: any) -> nil
+	@return SubscriptionId?
+]=]
+function State.listen(self: StateType, callback: (prevState: any, newState: any) -> ()): Types.SubscriptionId?
 	if not self._listeners then
-		return nil
+		return
 	end
 
 	assert(typeof(callback) == "function", "Callback argument must be a function")
@@ -102,19 +194,41 @@ function State:listen(callback: (prevState: any, newState: any) -> nil): Types.S
 	return subscriptionId
 end
 
-function State:unlisten(subscriptionId: Types.SubscriptionId): nil
+--[=[
+	Unlistens for state changes
+
+	Example:
+	```lua
+	local state = State.new({
+		val = 1,
+		time = tick(),
+		nest = {
+			val = 123123
+		}
+	})
+	
+	local subscriptionId = state:listen(function(prevState, newState)
+		print(prevState, newState)
+	end)
+	
+	state:unlisten(subscriptionId)
+	```
+
+	@within State
+	@method unlisten
+	@param subscriptionId SubscriptionId
+]=]
+function State.unlisten(self: StateType, subscriptionId: Types.SubscriptionId)
 	if not self._listeners then
-		return nil
+		return
 	end
 
 	assert(self._listeners[subscriptionId], "State listener does not exist")
 
 	self._listeners[subscriptionId] = nil
-
-	return nil
 end
 
-function State:pushUpdates(prevState: any, newState: any): nil
+function State.pushUpdates(self: StateType, prevState: any, newState: any)
 	if not self._context or not self._listeners then
 		return
 	end
@@ -124,50 +238,124 @@ function State:pushUpdates(prevState: any, newState: any): nil
 	for _, callback in pairs(self._listeners) do
 		pcall(callback, prevState, _newState)
 	end
-
-	return nil
 end
 
-function State:push(a: any, b: any): any
+--[=[
+	Pushes a new value to the state
+
+	Example:
+	```lua
+	local state = State.new({
+		val = 1,
+		time = tick(),
+		nest = {
+			val = 123123
+		}
+	})
+	
+	state:push("val", 2)
+	```
+
+	@within State
+	@method push
+	@param keyOrValue any -- The key of the pushed value or the value itself if the state is an array
+	@param value any? -- The value to push
+	@return any -- The key of the pushed value
+]=]
+function State.push(self: StateType, keyOrValue: any, value: any?): any
 	if not self._context then
-		return nil
+		return
 	end
 
-	local prevState = Util.extend({}, self._context) -- Create a 1 level copy // TODO: change to deep copy
-	local key = b ~= nil and a or #self._context + 1
+	local prevState = Util.extend({}, self._context) -- Create a 1 level copy -- TODO: change to deep copy
+	local key: any = value ~= nil and keyOrValue or #self._context + 1
 
-	self._context[key] = b ~= nil and b or a
+	self._context[key] = value ~= nil and value or keyOrValue
 
 	self:pushUpdates(prevState)
 
 	return key
 end
 
-function State:reset(): nil
+--[=[
+	Resets the state to an empty table
+
+	Example:
+	```lua
+	local state = State.new({
+		val = 1,
+		time = tick(),
+		nest = {
+			val = 123123
+		}
+	})
+	
+	state:reset()
+	
+	state:get(true) -- expect {}
+	```
+
+	@within State
+	@method reset
+]=]
+function State.reset(self: StateType)
 	self:pushUpdates(self._context, {})
 
 	self._context = {}
-
-	return nil
 end
 
-function State:set(newState: any, value: any): nil
+--[=[
+	Sets the state with a new value
+
+	Example:
+	```lua
+	local state = State.new({
+		val = 1,
+		time = tick(),
+		nest = {
+			val = 123123
+		}
+	})
+	
+	state:set("val", 11) -- Change val to 11
+	
+	state:set(function(prevState)
+		prevState.val = 111
+		
+		return prevState
+	end) -- Change val to 111
+	
+	state:set({
+		val = 1111
+	}) -- Change val to 1111
+	
+	state:set("nest.val", 11111) -- Change nest.val to 11111
+	
+	state:set("undefinedNest.val", 11111) -- Create undefinedNest and set val to 11111
+	```
+
+	@within State
+	@method set
+	@param newState any -- The new state value
+	@param value any? -- The value to set
+]=]
+function State.set(self: StateType, newState: any, value: any)
 	if not self._context then
-		return nil
+		return
 	end
 
-	local prevState = Util.extend({}, self._context) -- Create a local copy // TODO: change to deep copy
+	local prevState = Util.extend({}, self._context) -- Create a local copy -- TODO: change to deep copy
 
 	if typeof(newState) == "function" then
 		-- Replace entire state with the result of newState()
-		-- If newState() returns nil, the state will not be changed // TODO: change to nil instead of doing nothing?
+		-- If newState() returns nil, the state will not be changed -- TODO: change to nil instead of doing nothing?
 		-- If the required value is nil, use State:reset()
 
 		self._context = newState(self._context) or self._context
 	elseif typeof(newState) == "table" then
 		-- Replace specific state keys with given values
 
-		for k, v in pairs(newState) do
+		for k: any, v: any in pairs(newState) do
 			self._context[k] = v
 		end
 	elseif typeof(newState) == "string" then
@@ -175,79 +363,124 @@ function State:set(newState: any, value: any): nil
 		-- This requires the second argument to be a
 		-- value, unless the path is being set to nil
 
-		local path = Util.split(newState, ".", true)
+		local path: { string } = Util.split(newState, ".", true)
 		local res = self._context
 
 		if not res then
-			return nil
+			return
 		end
 
 		-- Go through nest until the last nest level is reached
-		for i, childName in ipairs(path) do
-			local numberIndex = tonumber(childName)
+		for i: number, childName: string in path do
+			local numberIndex: number? = tonumber(childName)
+			local resIndex: number | string = numberIndex or childName
 
-			if numberIndex then
-				childName = numberIndex
-			end
-
-			if res[childName] and i ~= #path then
-				res = res[childName]
+			if res[resIndex] and i ~= #path then
+				res = res[resIndex]
 			elseif i == #path then
 				-- Change the value if end of the path was reached
-				res[childName] = value
+				res[resIndex] = value
 			else
 				break
 			end
 		end
 	else
 		warn("No valid state setter was given")
-		return nil
+		return
 	end
 
 	self:pushUpdates(prevState)
-
-	return nil
 end
 
-function State:remove(path: string): nil
+--[=[
+	Removes a value from the state
+
+	Example:
+	```lua
+	local state = State.new({
+		val = 1,
+		time = tick(),
+		nest = {
+			val = 123123
+		}
+	})
+	
+	state:remove("val") -- Removes val from the state
+	
+	state:get(true) -- expect { time = tick(), nest = { val = 123123 } }
+	```
+
+	@within State
+	@method remove
+	@param path string -- The path to the value to remove
+]=]
+function State.remove(self: StateType, path: string)
 	local prevState = Util.extend({}, self._context) -- Create a local copy
 	local treePath = Util.split(path, ".", true)
 	local res = self._context
 
 	if not res then
-		return nil
+		return
 	end
 
 	-- Dig through nest until the last nest level is reached
-	for i, childName in ipairs(treePath) do
-		local numberIndex = tonumber(childName)
+	for i: number, childName: string in treePath do
+		local numberIndex: number? = tonumber(childName)
+		local resIndex: number | string = numberIndex or childName
 
-		if numberIndex then
-			childName = numberIndex
-		end
-
-		if res[childName] and i ~= #treePath then
-			res = res[childName]
+		if res[resIndex] and i ~= #treePath then
+			res = res[resIndex]
 		elseif i == #treePath then
 			-- Remove the value if end of the path was reached
-			res[childName] = nil
+			res[resIndex] = nil
 		else
 			break
 		end
 	end
 
 	self:pushUpdates(prevState)
-
-	return nil
 end
 
-function State:destroy(): nil
+--[=[
+	Destroys the state
+
+	Example:
+	```lua
+	local state = State.new({
+		val = 1,
+		time = tick(),
+		nest = {
+			val = 123123
+		}
+	})
+	
+	state:destroy()
+	
+	local success = pcall(function()
+		state:set("val", 1)
+	end)
+	
+	print('state destroyed?', not success) -- expect: true
+	```
+
+	@within State
+	@method destroy
+]=]
+function State.destroy(self: StateType)
 	self._context = nil
 	self._listeners = nil
 
 	pcall(setmetatable, self, {})
+end
 
-	return nil
+--[=[
+	Alias for State.destroy
+
+	@within State
+	@method Destroy
+]=]
+function State.Destroy(self: StateType)
+	self:destroy()
 end
 
 return State

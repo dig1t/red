@@ -1,5 +1,8 @@
+--- @class Server
+
 --!strict
 
+local Service = require(script.Parent.Service)
 local Types = require(script.Parent.Types)
 local redUtil = require(script.Parent.redUtil)
 
@@ -9,14 +12,35 @@ local ignoredReducerKeys = {
 	"init",
 	"_redService",
 	"name",
-	"private"
+	"private",
 }
 
-local Server: Types.ServerClass = {} :: Types.ServerClass
+local Server = {}
 Server.__index = Server
 
-function Server.new(): Types.ServerType
-	local self = setmetatable({}, Server)
+export type ServerType = typeof(setmetatable(
+	{} :: {
+		_reducers: {
+			[string]: (player: Player, payload: Types.ActionPayload?) -> any,
+		},
+		_privateReducers: {
+			[string]: (player: Player, payload: Types.ActionPayload?) -> any,
+		},
+		_services: {
+			[string]: any,
+		},
+		started: boolean,
+	},
+	Server
+))
+
+--[=[
+	Creates a new server instance
+	
+	@return ServerType
+]=]
+function Server.new(): ServerType
+	local self = setmetatable({}, Server) :: ServerType
 
 	self._reducers = {}
 	self._privateReducers = {}
@@ -25,29 +49,62 @@ function Server.new(): Types.ServerType
 	return self
 end
 
-function Server:bind(actionType: string, reducer: () -> any, private: boolean?): nil
+--[=[
+	Use this method to bind a service action to the server.
+	
+	Example:
+	```lua
+	server:bind("ACTION_TYPE", function(player: Player, payload: Types.ActionPayload?)
+		-- Do something
+	end)
+	```
+	
+	@within Server
+	@method bind
+	@param actionType string
+	@param reducer () -> any
+	@param private boolean?
+]=]
+function Server.bind(self: ServerType, actionType: string, reducer: () -> any, private: boolean?)
 	assert(typeof(actionType) == "string", "Action type must be a string")
 	assert(typeof(reducer) == "function", "Action must be a function")
 
 	self[private == true and "_privateReducers" or "_reducers"][actionType] = reducer
-
-	return nil
 end
 
-function Server:unbind(id: string): nil
+--[=[
+	Use this method to unbind a service action from the server.
+	
+	Example:
+	```lua
+	server:unbind("ACTION_TYPE")
+	```
+	
+	@within Server
+	@method unbind
+	@param id string
+]=]
+function Server.unbind(self: ServerType, id: string)
 	assert(self._reducers[id] or self._privateReducers[id], "Action reducer does not exist")
 
 	self._reducers[id] = nil
 	self._privateReducers[id] = nil
-
-	return nil
 end
 
-function Server:loadService(moduleInstance: ModuleScript): nil
-	assert(
-		typeof(moduleInstance) == "Instance" and moduleInstance:IsA("ModuleScript"),
-		"Path is not a ModuleScript"
-	)
+--[=[
+	Use this method to load a service into the server.
+	
+	Example:
+	```lua
+	server:loadService(game.ServerScriptService.Server.Services.MyService)
+	```
+	
+	@within Server
+	@method loadService
+	@param moduleInstance ModuleScript
+]=]
+function Server.loadService(self: ServerType, moduleInstance: ModuleScript)
+	assert(typeof(moduleInstance) == "Instance" and moduleInstance:IsA("ModuleScript"), "Path is not a ModuleScript")
 
 	local service = require(moduleInstance) :: any
 
@@ -60,7 +117,11 @@ function Server:loadService(moduleInstance: ModuleScript): nil
 	-- to include the controller name
 	-- and capitalize all characters
 	for reducerKey, reducerFn in pairs(service) do
-		if table.find(ignoredReducerKeys, reducerKey) or typeof(reducerFn) ~= "function" or typeof(reducerKey) ~= "string" then
+		if
+			table.find(ignoredReducerKeys, reducerKey)
+			or typeof(reducerFn) ~= "function"
+			or typeof(reducerKey) ~= "string"
+		then
 			continue
 		end
 
@@ -69,26 +130,49 @@ function Server:loadService(moduleInstance: ModuleScript): nil
 		self:bind(
 			actionType,
 			reducerFn,
-			typeof(service.private) == "table"
-				and table.find(service.private, actionType) ~= nil -- Check if reducer is private
+			typeof(service.private) == "table" and table.find(service.private, actionType) ~= nil -- Check if reducer is private
 				or service.private == true -- Check if all reducers are private
 		)
 	end
-
-	return nil
 end
 
-function Server:loadServices(services: { ModuleScript }): nil
+--[=[
+	Use this method to load multiple service modules into the server.
+	
+	Example:
+	```lua
+	server:loadServices(game.ServerScriptService.Server.Services:GetChildren())
+	```
+	
+	@within Server
+	@method loadServices
+	@param services { ModuleScript }
+]=]
+function Server.loadServices(self: ServerType, services: { ModuleScript })
 	for _, service: ModuleScript in pairs(services) do
 		self:loadService(service)
 	end
-
-	return nil
 end
 
 -- @desc Function for interal use only
--- Arguments will be interpreted as either (actionType, payload) or (actionType, player, payload)
-function Server:localCall(actionType, ...): any
+
+--[=[
+	Function for interal use only
+	
+	Arguments will be interpreted as either (actionType, payload) or (actionType, player, payload) depending on the number of arguments.
+	
+	Example:
+	```lua
+	server:localCall("ACTION_TYPE", player, payload)
+	```
+	
+	@within Server
+	@method localCall
+	@param actionType string
+	@param ... any
+	@return any
+]=]
+function Server.localCall(self: ServerType, actionType: string, ...): any
 	assert(typeof(actionType) == "string", "Action type must be a string")
 	assert(
 		self._reducers[actionType] or self._privateReducers[actionType],
@@ -96,11 +180,10 @@ function Server:localCall(actionType, ...): any
 	)
 
 	local serviceName: string = string.lower(string.split(actionType, "_")[1])
-	local service: Types.ServiceType = self._services[serviceName]
+	local service: Service.ServiceType = self._services[serviceName]
 
-	local success: boolean, res: Types.Action = pcall(
-		self._reducers[actionType] or self._privateReducers[actionType], service, ...
-	)
+	local success: boolean, res: Types.Action =
+		pcall(self._reducers[actionType] or self._privateReducers[actionType], service, ...)
 
 	if not success then
 		error(res, 2)
@@ -113,7 +196,21 @@ function Server:localCall(actionType, ...): any
 	return res
 end
 
-function Server:_call(action: Types.Action, player: Player?): any
+--[=[
+	Use this method to call an action.
+	
+	Example:
+	```lua
+	server:_call(action, player)
+	```
+	
+	@within Server
+	@method _call
+	@param action Types.Action
+	@param player Player?
+	@return Types.Action?
+]=]
+function Server._call(self: ServerType, action: Types.Action, player: Player?): Types.Action?
 	assert(action and typeof(action.type) == "string", "Action type must be a string")
 
 	if not (self._reducers[action.type] or self._privateReducers[action.type]) then
@@ -129,9 +226,7 @@ function Server:_call(action: Types.Action, player: Player?): any
 	local usingPlayerArgument: boolean? = typeof(player) == "Instance" and player:IsA("Player")
 	local usingActionPlayer: boolean? = typeof(action.player) == "Instance" and action.player:IsA("Player")
 
-	local targetPlayer: Player? = (usingPlayerArgument and player)
-		or (usingActionPlayer and action.player)
-		or nil
+	local targetPlayer: Player? = (usingPlayerArgument and player) or (usingActionPlayer and action.player) or nil
 
 	table.insert(args, targetPlayer) -- Check to make sure the player argument is a valid player
 
@@ -140,7 +235,7 @@ function Server:_call(action: Types.Action, player: Player?): any
 	end
 
 	local serviceName: string = string.lower(string.split(action.type, "_")[1])
-	local service: Types.ServiceType = self._services[serviceName]
+	local service: Service.ServiceType = self._services[serviceName]
 
 	service.name = serviceName
 
@@ -157,17 +252,14 @@ function Server:_call(action: Types.Action, player: Player?): any
 			local userId: number = _player and _player.UserId or 0
 
 			if typeof(res) == "string" then
-				error(
-					res .. (userId and ` - UserId: {userId}` or ""),
-					2
-				)
+				error(res .. (userId and ` - UserId: {userId}` or ""), 2)
 			end
 		end)
 
 		return {
 			type = action.type,
 			err = typeof(res) == "string" and res or nil,
-			success = false
+			success = false,
 		} :: Types.Action
 	end
 
@@ -177,23 +269,33 @@ function Server:_call(action: Types.Action, player: Player?): any
 	elseif not res then
 		res = {
 			type = action.type,
-			success = true
+			success = true,
 		}
 	end
 
-	return res
+	return res :: Types.Action
 end
 
-function Server:init(): nil
+--[=[
+	Initializes the server.
+	
+	This will call the ```init``` method on all services.
+	
+	@within Server
+	@method init
+]=]
+function Server.init(self: ServerType)
 	for _, service in pairs(self._services) do
-		if service.init ~= nil then
-			assert(typeof(service.init) == "function", "Expected service.init to be a function")
-
-			task.spawn(function()
-				debug.setmemorycategory(service.name)
-				service:init()
-			end)
+		if not service.init then
+			continue
 		end
+
+		assert(typeof(service.init) == "function", "Expected service.init to be a function")
+
+		task.spawn(function()
+			debug.setmemorycategory(service.name)
+			service:init()
+		end)
 	end
 
 	-- Hook listeners
@@ -206,7 +308,7 @@ function Server:init(): nil
 
 		action.player = player
 
-		local res: Types.Action = self:_call(action, player)
+		local res: Types.Action? = self:_call(action, player)
 
 		if not res then
 			return
@@ -215,10 +317,7 @@ function Server:init(): nil
 		-- If the action's method is "get" fire it back
 		-- to the sender
 		if action.method and action.method == "get" then
-			assert(
-				typeof(res) == "table",
-				action.type .. " - Cannot return a " .. typeof(res) .. " type to a client."
-			)
+			assert(typeof(res) == "table", action.type .. " - Cannot return a " .. typeof(res) .. " type to a client.")
 
 			res.uid = action.uid
 
@@ -266,8 +365,6 @@ function Server:init(): nil
 	end)
 
 	self.started = true
-
-	return nil
 end
 
 return Server

@@ -1,12 +1,16 @@
+--[=[
+	@class Store
+]=]
+
 --!strict
 
 local RunService = game:GetService("RunService")
 
-local Types = require(script.Parent.Types)
-local redUtil = require(script.Parent.redUtil)
 local Constants = require(script.Parent.Constants)
-local Util = require(script.Parent.Parent.Util)
 local Promise = require(script.Parent.Parent.Promise)
+local Types = require(script.Parent.Types)
+local Util = require(script.Parent.Parent.Util)
+local redUtil = require(script.Parent.redUtil)
 
 local remotes: any = redUtil.getRemotes()
 local isServer: boolean = RunService:IsServer()
@@ -14,8 +18,21 @@ local isServer: boolean = RunService:IsServer()
 local Store = {}
 Store.__index = Store
 
-function Store.new(): Types.StoreType
-	local self = setmetatable({}, Store)
+export type StoreType = typeof(setmetatable(
+	{} :: {
+		_connections: { [number]: RBXScriptConnection },
+		_subscribers: { [Types.SubscriptionId]: (action: Types.Action) -> nil },
+	},
+	Store
+))
+
+--[=[
+	Creates a new store instance
+	
+	@return StoreType
+]=]
+function Store.new(): StoreType
+	local self = setmetatable({}, Store) :: StoreType
 
 	self._connections = {}
 	self._subscribers = {}
@@ -23,12 +40,21 @@ function Store.new(): Types.StoreType
 	return self
 end
 
---[[
-	@desc dispatches an action
-	@param player|boolean arg[1] - determines who receives the action event (optional)
-	@param object action arg[1]|arg[2] - action
-]]--
-function Store:dispatch(...): nil
+--[=[
+	Dispatches an action
+	
+	The first argument can be a player or a table of players, which will determine who receives the action event.
+	
+	If the first argument is ```true```, then the action will be fired to ***all clients***.
+	
+	The second argument is the action object. (Types.Action)
+	
+	@within Store
+	@method dispatch
+	@param target Player | { Player } | true
+	@param action Types.Action
+]=]
+function Store.dispatch(_self: StoreType, ...: any)
 	local args = { ... }
 
 	local action: Types.Action = #args == 1 and args[1] or args[2]
@@ -37,11 +63,10 @@ function Store:dispatch(...): nil
 	assert(typeof(action) == "table", "Action must be a table")
 	assert(action.type, "Action must have an action type")
 
-	local recipient: Player | { Player } = #args == 2 and
-		(typeof(args[1]) == "Instance" or
-		typeof(args[1]) == "table") and args[1]
-	local fireToAll: boolean = #args == 2 and
-		typeof(args[1]) == "boolean" and args[1]
+	local recipient: Player | { Player } = #args == 2
+		and (typeof(args[1]) == "Instance" or typeof(args[1]) == "table")
+		and args[1]
+	local fireToAll: boolean = #args == 2 and typeof(args[1]) == "boolean" and args[1]
 
 	if isServer then
 		action.success = not action.err
@@ -82,17 +107,17 @@ function Store:dispatch(...): nil
 			warn(`Store - could not dispatch action: {action.type}`) -- Convert to error handler (?)
 		end
 	end
-
-	return nil
 end
 
---[[
-	@desc dispatches an action with a unique id,
-		then yields and watches for incoming actions
-		with the same tag and returns the action as a result
-	@return result
-]]--
-function Store:get(action: Types.Action): any
+--[=[
+	Dispatches an action with a unique id, then yields and watches for incoming actions with the same tag, and returns the action as a result
+	@within Store
+	@method get
+	@param self StoreType
+	@param action Types.Action
+	@return any
+]=]
+function Store.get(self: StoreType, action: Types.Action): any
 	assert(typeof(action) == "table", "Action must be a table")
 	assert(action.type, "Action must have an action type")
 
@@ -107,14 +132,16 @@ function Store:get(action: Types.Action): any
 
 	local promise = Promise.new(function(resolve, _reject)
 		if isServer then
-			connections[#connections + 1] = remotes.Client.OnServerEvent:Connect(function(player: Player, _action: Types.Action)
-				-- From client
-				_action.player = player
+			connections[#connections + 1] = remotes.Client.OnServerEvent:Connect(
+				function(player: Player, _action: Types.Action)
+					-- From client
+					_action.player = player
 
-				if _action.method == "get_result" and _action.uid == uid then
-					resolve(_action)
+					if _action.method == "get_result" and _action.uid == uid then
+						resolve(_action)
+					end
 				end
-			end)
+			)
 			connections[#connections + 1] = remotes.Server.Event:Connect(function(_action: Types.Action)
 				-- From server
 				if _action.method == "get_result" and _action.uid == uid then
@@ -131,18 +158,21 @@ function Store:get(action: Types.Action): any
 		end
 
 		self:dispatch(action)
-	end):andThen(function(_action)
-		res = _action
-		responseReceived = true
-	end):catch(function(err: string)
-		res = {
-			err = err
-		} :: Types.Action
-	end):finally(function()
-		for _, connection: RBXScriptConnection in pairs(connections) do
-			connection:Disconnect() -- Disconnect the watcher
-		end
 	end)
+		:andThen(function(_action)
+			res = _action
+			responseReceived = true
+		end)
+		:catch(function(err: string)
+			res = {
+				err = err,
+			} :: Types.Action
+		end)
+		:finally(function()
+			for _, connection: RBXScriptConnection in pairs(connections) do
+				connection:Disconnect() -- Disconnect the watcher
+			end
+		end)
 
 	local start: number = os.clock()
 	local timeout: number = action.timeout or Constants.STORE_TIMEOUT
@@ -158,7 +188,7 @@ function Store:get(action: Types.Action): any
 	return res
 end
 
-function Store:_callSubscribers(action: Types.Action, safeCall: boolean?): nil
+function Store._callSubscribers(self: StoreType, action: Types.Action, safeCall: boolean?)
 	if not action.type or action.method == "get" or action.method == "get_result" then
 		-- Ignore get method actions, these
 		-- will be processed by store:get()
@@ -172,14 +202,22 @@ function Store:_callSubscribers(action: Types.Action, safeCall: boolean?): nil
 			callback(action)
 		end
 	end
-
-	return nil
 end
 
-function Store:subscribe(fn: (action: Types.Action) -> nil): Types.SubscriptionId
-	assert(typeof(fn) == "function", "Callback argument must exist and be a function")
+--[=[
+	Sets up a subscription to listen for actions dispatched by the store
+	
+	When an action is dispatched, the callback function will be called with the action as an argument
+	
+	@within Store
+	@method subscribe
+	@param callback (action: Types.Action) -> ()
+	@return Types.SubscriptionId
+]=]
+function Store.subscribe(self: StoreType, callback: (action: Types.Action) -> ()): Types.SubscriptionId
+	assert(typeof(callback) == "function", "Callback argument must exist and be a function")
 
-	local id: Types.SubscriptionId = Util.randomString(8) -- Unique reference ID used for unsubscribing
+	local subscriptionId: Types.SubscriptionId = Util.randomString(8) -- Unique reference ID used for unsubscribing
 
 	if Util.tableLength(self._subscribers) == 0 then
 		-- Hook connections to start receiving events
@@ -195,27 +233,32 @@ function Store:subscribe(fn: (action: Types.Action) -> nil): Types.SubscriptionI
 			)
 
 			-- From server
-			self._connections[#self._connections + 1] = remotes.Server.Event:Connect(
-				function(action: Types.Action)
-					self:_callSubscribers(action, true)
-				end
-			)
+			self._connections[#self._connections + 1] = remotes.Server.Event:Connect(function(action: Types.Action)
+				self:_callSubscribers(action, true)
+			end)
 		else
 			-- From client
 			self._connections[#self._connections + 1] = remotes.Client.OnClientEvent:Connect(
 				function(action: Types.Action)
-					self:_callSubscribers(action)
+					self:_callSubscribers(action, false)
 				end
 			)
 		end
 	end
 
-	self._subscribers[id] = fn
+	self._subscribers[subscriptionId] = callback
 
-	return id
+	return subscriptionId
 end
 
-function Store:unsubscribe(id: Types.SubscriptionId): nil
+--[=[
+	Unsubscribes a listener from the store using the subscription id returned from ```Store:subscribe()```.
+	
+	@within Store
+	@method unsubscribe
+	@param id Types.SubscriptionId
+]=]
+function Store.unsubscribe(self: StoreType, id: Types.SubscriptionId)
 	assert(self._subscribers[id], "Store:unsubscribe() - Event listener id does not exist")
 
 	self._subscribers[id] = nil
@@ -229,8 +272,6 @@ function Store:unsubscribe(id: Types.SubscriptionId): nil
 			self._connections[index] = nil
 		end
 	end
-
-	return nil
 end
 
 return Store
