@@ -115,7 +115,7 @@ end
 	@return number
 ]=]
 function State.length(self: StateType): number
-	return Util.tableLength(self._context)
+	return self._context and Util.tableLength(self._context) or 0
 end
 
 --[=[
@@ -153,7 +153,8 @@ function State.get(self: StateType, path: string | boolean): any -- Todo: suppor
 	end
 
 	return path == true and self._context -- return the entire state
-		or Util.treePath(self._context, path, ".") -- return the value at the path
+		or (typeof(path) == "string" and Util.treePath(self._context, path, "."))
+		or nil
 end
 
 --[=[
@@ -415,7 +416,7 @@ end
 	@param path string -- The path to the value to remove
 ]=]
 function State.remove(self: StateType, path: string)
-	local prevState = Util.extend({}, self._context) -- Create a local copy
+	local prevState = Util.extend({}, self._context or {}) -- Create a local copy
 	local treePath = Util.split(path, ".", true)
 	local res = self._context
 

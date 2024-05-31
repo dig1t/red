@@ -3,7 +3,7 @@
   "luau-lsp.require.mode": "relativeToWorkspaceRoot",
   "luau-lsp.sourcemap.autogenerate": true,
   "luau-lsp.sourcemap.enabled": true,
-  "luau-lsp.sourcemap.rojoProjectFile": "build.project.json",
+  "luau-lsp.sourcemap.rojoProjectFile": "dev.project.json",
   "luau-lsp.types.definitionFiles": [
     "testez.d.lua"
   ],
