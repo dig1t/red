@@ -413,11 +413,11 @@ end
 
 	@within State
 	@method remove
-	@param path string -- The path to the value to remove
+	@param path string | number -- The path to the value to remove
 ]=]
-function State.remove(self: StateType, path: string)
+function State.remove(self: StateType, path: string | number)
 	local prevState = Util.extend({}, self._context or {}) -- Create a local copy
-	local treePath = Util.split(path, ".", true)
+	local treePath = Util.split(tostring(path), ".", true)
 	local res = self._context
 
 	if not res then
