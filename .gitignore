@@ -2,12 +2,7 @@
 
 .env
 env.luau
-
-.vscode/*
-!.vscode/extensions.json
-!.vscode/launch.json
-!.vscode/settings.json
-!.vscode/tasks.json
+*.code-workspace
 
 # dependency directories
 Packages
@@ -18,6 +13,7 @@ node_modules
 placeAssets
 sourcemap.json
 build
+globalTypes.d.luau
 
 # project place file
 *.rbxlx

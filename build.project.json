@@ -13,8 +13,12 @@
           "$path": "src"
         },
 
-        "dLib": {
-          "$path": "modules/dlib"
+        "Util": {
+          "$path": "modules/dlib/src/Util"
+        },
+
+        "Promise": {
+          "$path": "modules/dlib/src/Promise"
         }
       },
 
