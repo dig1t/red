@@ -140,10 +140,10 @@ end
 
 	@within State
 	@method get
-	@param path string | boolean
+	@param path string | number | boolean
 	@return any
 ]=]
-function State.get(self: StateType, path: string | boolean): any -- Todo: support for nested tables
+function State.get(self: StateType, path: string | number | boolean): any -- Todo: support for nested tables
 	if not self._context then
 		return nil
 	end
