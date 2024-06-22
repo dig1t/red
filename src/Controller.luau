@@ -13,7 +13,7 @@
 		print("init")
 	end)
 	
-	-- You can subscribe to red store to listen for actions
+	-- You can subscribe to the red store to listen for actions
 	controller:subscribe(function(action: red.Action)
 		print(action.type)
 	end)

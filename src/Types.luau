@@ -2,9 +2,7 @@
 
 export type SubscriptionId = string
 
-export type ActionPayload = {
-	[any]: any,
-}
+export type ActionPayload = any
 
 export type Action = {
 	uid: string?,

@@ -1,5 +1,5 @@
 {
-	"languageMode": "nocheck",
+	"languageMode": "strict",
 	"globals": [
 		"describe",
 		"expect",

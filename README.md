@@ -24,7 +24,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local red = require(ReplicatedStorage.Packages.red)
 
-local server = red.Server.new() -- Constructs a new server
+local server: red.ServerType = red.Server.new() -- Constructs a new server
 
 server:init() -- Starts listening to dispatches
 ```
@@ -34,7 +34,7 @@ server:init() -- Starts listening to dispatches
 local my_service = red.Service.new({
 	name = "my_service", -- Action prefix for binding actions
 	private = { -- Functions not available to clients
-		"MODULE_PRINT"
+		"MY_SERVICE_PRINT"
 	}
 })
 
@@ -59,8 +59,8 @@ end
 return my_service
 ```
 
-#### Server:bind(type, fn, private)
-`Server:bind(actionType, callback, [private]) -> void`
+#### Server:bind(actionType: string, callback: (Player, ...)  -> (), [private: boolean?])
+`Server:bind(actionType: string, callback: (Player, ...)  -> (), [private: boolean?]) -> ()`
 
 Binds an action to the server
 
@@ -73,20 +73,20 @@ server:bind("PLAYER_KILL", function(player)
 end, true)
 ```
 
-#### Server:unbind(actionType)
-`Server:unbind(actionType) -> void`
+#### Server:unbind(actionType: string)
+`Server:unbind(actionType: string) -> ()`
 
 Unbinds an action from the server
 
 
-#### Server:loadService(path)
-`Server:loadService(path) -> void`
+#### Server:loadService(service: Instance)
+`Server:loadService(service: Instance) -> ()`
 
  Loads a service to bind to the server.
- `path` must be a ModuleScript instance
+ `service` must be a ModuleScript instance
 
-#### Server:loadServices(services)
-`Server:loadServices(services) -> void`
+#### Server:loadServices(services: Instance | { Instance })
+`Server:loadServices(services: Instance | { Instance }) -> ()`
 
  Loads a service to bind to the server.
  `services` must be a table of ModuleScripts to load
@@ -115,8 +115,8 @@ local red = require(ReplicatedStorage.Packages.red)
 local store = red.Store.new() -- Constructs a new store
 ```
 
-#### Store:dispath(true|player(s)|(action), action)
-`Store:dispatch(true|player(s)|(action), [action]) -> void`
+#### Store:dispath(true | { Player } | red.Action, red.Action)
+`Store:dispatch(true | { Player } | red.Action, [red.Action]) -> ()`
 
 Dispatches an action
 - If only one argument is defined, then the server will recieve the dispatch.
@@ -168,8 +168,8 @@ store:dispatch({ Players.Player2, Players.Player3 }, {
 })
 ```
 
-#### Store:get(action)
-`Store:get(action) -> void`
+#### Store:get(action: red.Action)
+`Store:get(action: red.Action) -> ()`
 
 Dispatches an action and yields until a result is returned.
 
@@ -211,8 +211,8 @@ store:subscribe(function(action)
 end)
 ```
 
-#### Store:unsubscribe(connectionId)
-`Store:unsubscribe(connectionId) -> void`
+#### Store:unsubscribe(connectionId: red.SubscriptionId)
+`Store:unsubscribe(connectionId: red.SubscriptionId) -> ()`
 
 Disconnects the connection so no further callbacks are made.
 
@@ -220,14 +220,15 @@ Disconnects the connection so no further callbacks are made.
 -- Setup the listener
 local connectionId
 
-connectionId= store:subscribe(function(action)
+connectionId = store:subscribe(function(action: red.Action)
 	if action.type == "HELLO_WORLD" then
 		print(action.type)
 		store:unsubscribe(connectionId) -- Stop receiving actions
 	end
 end)
 
-wait(2)
+task.wait(2)
+
 store:unsubscribe(connectionId) -- Stop receiving actions
 ```
 
@@ -245,12 +246,12 @@ local state = red.State.new() -- Constructs a new state
 ```
 
 #### State:length()
-`State:length() -> tableLength`
+`State:length() -> number`
 
 Returns the number of children in the state
 
 #### State:get(path)
-`State:get(path) -> result`
+`State:get(path) -> any`
 
 Gets a value from the state. This value can be
 nested, if true is passed for `path`, the entire state will be returned
@@ -272,13 +273,13 @@ state:listen(function(prevState, newState)
 end)
 ```
 
-#### State:unlisten(connectionId)
-`State:unlisten(connectionId) -> void`
+#### State:unlisten(connectionId: red.SubscriptionId)
+`State:unlisten(connectionId: red.SubscriptionId) -> ()`
 
 Disconnects the connection so no further callbacks are made.
 
-#### State:push(key, value)
-`State:push(key, [value]) -> void`
+#### State:push(key: string, value: any)
+`State:push(key: string, [value: any]) -> ()`
 
 Pushes/replaces a value to the state.
 
@@ -289,12 +290,12 @@ children in the state.
 will be the key, followed by the value
 
 #### State:reset()
-`State:reset() -> void`
+`State:reset() -> ()`
 
 Clears the state of all children
 
-#### State:set(newState|path, value)
-`State:set(newState, [value]) -> void`
+#### State:set(newState: { [any]: any } | path: string, value: any)
+`State:set(newState: { [any]: any } | path: string, [value: any]) -> ()`
 
 Sets value(s) in the state.
 - If both `path` and `value` are passed. `State:set()` will assume you are setting the given index `path` valued as `value`.
@@ -312,8 +313,8 @@ end)
 print(state.Player1.name) -- Jack
 ```
 
-#### State:remove(path)
-`State:remove(path) -> void`
+#### State:remove(path: string)
+`State:remove(path: string) -> ()`
 
 Removes a value from the state with the location of `path`.
 
