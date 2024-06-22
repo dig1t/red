@@ -4,7 +4,7 @@
 Usage example
 
 ### Server
-```lua
+```luau
 local test: Service.ServiceType = Service.new({
 	name = "test",
 	version = "1.0.0",
@@ -37,7 +37,7 @@ return test
 ```
 
 ### Client
-```lua
+```luau
 local store = red.Store.new()
 
 store:subscribe(function(action: red.Action)

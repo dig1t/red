@@ -19,7 +19,7 @@ Once the place file is open, you can find the package inside `ReplicatedStorage.
 Returns a new Server class
 
 #### Setup
-```lua
+```luau
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local red = require(ReplicatedStorage.Packages.red)
@@ -30,7 +30,7 @@ server:init() -- Starts listening to dispatches
 ```
 
 #### Service Setup
-```lua
+```luau
 local my_service = red.Service.new({
 	name = "my_service", -- Action prefix for binding actions
 	private = { -- Functions not available to clients
@@ -65,7 +65,7 @@ return my_service
 Binds an action to the server
 
 If `private` is true, clients will be unable to dispatch this action.
-```lua
+```luau
 server:bind("PLAYER_KILL", function(player)
 	if player and player.Character then
 		player.Character:BreakJoints()
@@ -96,7 +96,7 @@ Unbinds an action from the server
 
 Calls actions locally and returns an action as a response.
 Tuple parameters can be passed in this order: `player, payload`
-```lua
+```luau
 local Players = game:GetService("Players")
 
 server:localCall("PLAYER_KILL", Players.Player1)
@@ -107,7 +107,7 @@ server:localCall("PLAYER_KILL", Players.Player1)
 Returns a new Store class
 
 #### Setup
-```lua
+```luau
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local red = require(ReplicatedStorage.Packages.red)
@@ -122,7 +122,7 @@ Dispatches an action
 - If only one argument is defined, then the server will recieve the dispatch.
 - If two actions are defined, the defined client(s) will recieve the dispatch.
 
-```lua
+```luau
 local Players = game:GetService("Players")
 
 -- Dispatch to the server
@@ -173,7 +173,7 @@ store:dispatch({ Players.Player2, Players.Player3 }, {
 
 Dispatches an action and yields until a result is returned.
 
-```lua
+```luau
 -- Client
 local fetch = store:get({ -- Fetch player stats from the server
 	type = "PLAYER_STATS",
@@ -202,7 +202,7 @@ end
 Listens for all dispatches sent to the client, if used in a Script, it will only listen to server dispatches.
 It will return a unique connection ID used for disconnecting the connection.
 
-```lua
+```luau
 -- Clients and Servers use the same method
 store:subscribe(function(action)
 	if action.type == "UI_NOTIFICATION" then
@@ -216,7 +216,7 @@ end)
 
 Disconnects the connection so no further callbacks are made.
 
-```lua
+```luau
 -- Setup the listener
 local connectionId
 
@@ -237,7 +237,7 @@ store:unsubscribe(connectionId) -- Stop receiving actions
 Returns a new State class. An `initialState` table can be passed as the initial state.
 
 #### Setup
-```lua
+```luau
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local red = require(ReplicatedStorage.Packages.red)
@@ -256,7 +256,7 @@ Returns the number of children in the state
 Gets a value from the state. This value can be
 nested, if true is passed for `path`, the entire state will be returned
 
-```lua
+```luau
 print(state:get("Player1.kills")) -- Prints player kills
 print(true) -- Prints the whole state table
 ```
@@ -265,7 +265,7 @@ print(true) -- Prints the whole state table
 `State:listen(callback) -> connectionId`
 
 Watches for changes in the state. It will return a unique connection ID used for disconnecting the connection.
-```lua
+```luau
 state:listen(function(prevState, newState)
 	if prevState.Player1.position ~= newState.Player1.position then
 		print("Character moved positions")
@@ -301,7 +301,7 @@ Sets value(s) in the state.
 - If both `path` and `value` are passed. `State:set()` will assume you are setting the given index `path` valued as `value`.
 - If `newState` is a function, it will set the state as whatever the function returns. `State:Set()` will call the function with the current state as the first argument.
 
-```lua
+```luau
 State:set("Player1.name", "Bob")
 print(state.Player1.name) -- Bob
 
@@ -318,7 +318,7 @@ print(state.Player1.name) -- Jack
 
 Removes a value from the state with the location of `path`.
 
-```lua
+```luau
 state:remove("Player1.weapons.sword")
 ```
 

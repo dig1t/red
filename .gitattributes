@@ -1,3 +1,2 @@
 * text=auto
-src/*.lua text eol=lf
 src/*.luau text eol=lf
