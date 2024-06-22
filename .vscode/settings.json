@@ -1,10 +1,10 @@
 {
   "luau-lsp.diagnostics.workspace": true,
-  "luau-lsp.require.mode": "relativeToWorkspaceRoot",
+  "luau-lsp.require.mode": "relativeToFile",
   "luau-lsp.sourcemap.autogenerate": true,
   "luau-lsp.sourcemap.enabled": true,
   "luau-lsp.sourcemap.rojoProjectFile": "dev.project.json",
-  "luau-lsp.sourcemap.includeNonScripts": true,
+  "luau-lsp.diagnostics.strictDatamodelTypes": false,
   "luau-lsp.types.definitionFiles": [
     "testez.d.luau"
   ],
