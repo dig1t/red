@@ -4,7 +4,7 @@
 ## wally
 Add the below line to your wally.toml file
 ```toml
-red = "dig1t/red@1.4.6"
+red = "dig1t/red@1.4.7"
 ```
 ## Roblox Studio
 Download the rbxl file from the [releases](https://github.com/dig1t/red/releases) tab.
