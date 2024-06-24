@@ -1,6 +1,6 @@
 {
   "luau-lsp.diagnostics.workspace": true,
-  "luau-lsp.require.mode": "relativeToFile",
+  "luau-lsp.require.mode": "relativeToWorkspaceRoot",
   "luau-lsp.sourcemap.autogenerate": true,
   "luau-lsp.sourcemap.enabled": true,
   "luau-lsp.sourcemap.rojoProjectFile": "dev.project.json",

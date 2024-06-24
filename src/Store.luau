@@ -12,7 +12,7 @@ local Types = require(script.Parent.Types)
 local Util = require(script.Parent.Parent.Util)
 local redUtil = require(script.Parent.redUtil)
 
-local remotes: any = redUtil.getRemotes()
+local remotes = redUtil.getRemotes()
 local isServer: boolean = RunService:IsServer()
 
 local Store = {}
@@ -170,7 +170,7 @@ function Store.get(self: StoreType, action: Types.Action): any
 		end)
 		:finally(function()
 			for _, connection: RBXScriptConnection in pairs(connections) do
-				connection:Disconnect() -- Disconnect the watcher
+				connection:Disconnect() -- Disconnect the watchers
 			end
 		end)
 
@@ -182,7 +182,7 @@ function Store.get(self: StoreType, action: Types.Action): any
 	until res ~= nil or responseReceived or os.clock() - start >= timeout
 
 	if not responseReceived then
-		promise:reject(`Timed out while waiting for action: "{action.type}"`)
+		promise:_reject(`Timed out while waiting for action: "{action.type}"`)
 	end
 
 	return res

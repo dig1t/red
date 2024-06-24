@@ -9,5 +9,5 @@ include = ["src", "default.project.json"]
 exclude = ["src/**/*.spec.luau"]
 
 [dependencies]
-Util = "dig1t/util@1.0.3"
-Promise = "dig1t/promise@1.0.1"
+Util = "dig1t/util@1.0.6"
+Promise = "dig1t/promise@1.1.0"
