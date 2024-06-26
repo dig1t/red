@@ -10,4 +10,4 @@ exclude = ["src/**/*.spec.luau"]
 
 [dependencies]
 Util = "dig1t/util@1.0.6"
-Promise = "dig1t/promise@1.1.0"
+Promise = "dig1t/promise@1.1.1"
