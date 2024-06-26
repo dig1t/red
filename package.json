@@ -23,6 +23,6 @@
   },
   "homepage": "https://github.com/dig1t/red#readme",
   "dependencies": {
-    "moonwave": "^1.1.2"
+    "moonwave": "^1.1.3"
   }
 }
