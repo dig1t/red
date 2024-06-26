@@ -53,7 +53,7 @@ end
 	Use this method to bind a service action to the server.
 	
 	Example:
-	```luau
+	```lua
 	server:bind("ACTION_TYPE", function(player: Player, payload: Types.ActionPayload?)
 		-- Do something
 	end)
@@ -76,7 +76,7 @@ end
 	Use this method to unbind a service action from the server.
 	
 	Example:
-	```luau
+	```lua
 	server:unbind("ACTION_TYPE")
 	```
 	
@@ -95,7 +95,7 @@ end
 	Use this method to load a service into the server.
 	
 	Example:
-	```luau
+	```lua
 	server:loadService(game.ServerScriptService.Server.Services.MyService)
 	```
 	
@@ -140,7 +140,7 @@ end
 	Use this method to load multiple service modules into the server.
 	
 	Example:
-	```luau
+	```lua
 	server:loadServices(game.ServerScriptService.Server.Services:GetChildren())
 	```
 	
@@ -162,7 +162,7 @@ end
 	Arguments will be interpreted as either (actionType, payload) or (actionType, player, payload) depending on the number of arguments.
 	
 	Example:
-	```luau
+	```lua
 	server:localCall("ACTION_TYPE", player, payload)
 	```
 	
@@ -200,7 +200,7 @@ end
 	Use this method to call an action.
 	
 	Example:
-	```luau
+	```lua
 	server:_call(action, player)
 	```
 	

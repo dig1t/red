@@ -4,7 +4,7 @@
 	Controller is a class that is used to manage different features of the game.
 	It can can ran on both the client and server.
 	
-	```luau
+	```lua
 	local controller = red.Controller.new({
 		name = "test";
 	})

@@ -3,7 +3,7 @@
 
 Usage example
 
-```luau
+```lua
 local state = State.new({
 	val = 1,
 	time = tick(),
@@ -98,7 +98,7 @@ end
 	Returns the length of the state
 	
 	Example:
-	```luau
+	```lua
 	local state = State.new({
 		val = 1,
 		time = tick(),
@@ -122,7 +122,7 @@ end
 	Returns the value at the given path
 
 	Example:
-	```luau
+	```lua
 	local state = State.new({
 		val = 1,
 		time = tick(),
@@ -161,7 +161,7 @@ end
 	Listens for state changes
 
 	Example:
-	```luau
+	```lua
 	local state = State.new({
 		val = 1,
 		time = tick(),
@@ -199,7 +199,7 @@ end
 	Unlistens for state changes
 
 	Example:
-	```luau
+	```lua
 	local state = State.new({
 		val = 1,
 		time = tick(),
@@ -245,7 +245,7 @@ end
 	Pushes a new value to the state
 
 	Example:
-	```luau
+	```lua
 	local state = State.new({
 		val = 1,
 		time = tick(),
@@ -282,7 +282,7 @@ end
 	Resets the state to an empty table
 
 	Example:
-	```luau
+	```lua
 	local state = State.new({
 		val = 1,
 		time = tick(),
@@ -309,7 +309,7 @@ end
 	Sets the state with a new value
 
 	Example:
-	```luau
+	```lua
 	local state = State.new({
 		val = 1,
 		time = tick(),
@@ -397,7 +397,7 @@ end
 	Removes a value from the state
 
 	Example:
-	```luau
+	```lua
 	local state = State.new({
 		val = 1,
 		time = tick(),
@@ -446,7 +446,7 @@ end
 	Destroys the state
 
 	Example:
-	```luau
+	```lua
 	local state = State.new({
 		val = 1,
 		time = tick(),
