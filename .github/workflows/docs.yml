@@ -9,7 +9,6 @@ on:
       - 'docs/**'
       - 'moonwave.toml'
       - 'README.md'
-  workflow_call:
 
 permissions:
   contents: write

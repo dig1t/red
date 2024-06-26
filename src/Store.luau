@@ -115,9 +115,9 @@ end
 	@method get
 	@param self StoreType
 	@param action Types.Action
-	@return any
+	@return Types.Action?
 ]=]
-function Store.get(self: StoreType, action: Types.Action): any
+function Store.get(self: StoreType, action: Types.Action): Types.Action?
 	assert(typeof(action) == "table", "Action must be a table")
 	assert(action.type, "Action must have an action type")
 
