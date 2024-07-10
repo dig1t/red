@@ -28,7 +28,7 @@ export type StateType = State.StateType
 
 export type ServerType = Server.ServerType
 
-export type ServiceConfig = Service.ServiceConfig
+export type ServiceClass = Service.ServiceClass
 export type ServiceType = Service.ServiceType
 
 export type ControllerConfig = Controller.ControllerConfig

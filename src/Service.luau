@@ -1,29 +1,59 @@
 --[=[
 @class Service
 
-Usage example
+Usage example (Type checking and intellisense compatible):
 
-### Server
 ```lua
-local test: Service.ServiceType = Service.new({
+--!strict
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Packages = ReplicatedStorage.Packages
+local red = require(Packages.red)
+
+-- You can require other services as well!
+local MyService = require(script.Parent.MyService)
+
+local store = red.Store.new()
+
+local Test = {
 	name = "test",
 	version = "1.0.0",
 	private = { -- Clients cannot invoke these
 		"TEST_HELLO"
 	}
-})
+}
+Test.__index = Test
+
+-- This allows you to use Luau LSP for type checking and intellisense
+export type TestServiceType = typeof(setmetatable(
+	{} :: {
+		-- Enter your properties here
+		prop: string,
+	},
+	Test -- This is the service class
+))
 
 -- all other services will have already
 -- been loaded when this gets called
-function test:init()
+function test.init(self: TestServiceType)
+	self.prop = 1
+
 	print("red has started!")
+
+	print(MyService.property)
 end
 
-function test:_privateMethod(player: Player, payload: red.ActionPayload)
+function test._privateMethod(self: TestServiceType, player: Player, payload: red.ActionPayload)
 	-- this cannot be called from anywhere except this service
+	print("called from ping")
 end
 
-function test:ping(player: Player, payload: red.ActionPayload)
+function test.ping(self: TestServiceType, player: Player, payload: red.ActionPayload)
+	print(self.prop)
+	
+	self:_privateMethod(player, payload)
+	
 	store:dispatch(player, {
 		type = "TEST_PONG",
 		payload = {
@@ -33,11 +63,16 @@ function test:ping(player: Player, payload: red.ActionPayload)
 	})
 end
 
-return test
+return red.Service.new(Test) :: TestServiceType
 ```
 
 ### Client
 ```lua
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Packages = ReplicatedStorage.Packages
+local red = require(Packages.red)
+
 local store = red.Store.new()
 
 store:subscribe(function(action: red.Action)
@@ -64,7 +99,7 @@ store:dispatch({
 local Service = {}
 Service.__index = Service
 
-export type ServiceConfig = {
+export type ServiceClass = {
 	name: string,
 	private: { string } | boolean?,
 	[any]: any,
@@ -73,7 +108,7 @@ export type ServiceConfig = {
 export type ServiceType = typeof(setmetatable(
 	{} :: {
 		_redService: true,
-		_services: {
+		_methods: {
 			[string]: any,
 		},
 		name: string,
@@ -85,25 +120,27 @@ export type ServiceType = typeof(setmetatable(
 --[=[
 	Creates a new service instance
 	
-	@param config ServiceConfig
+	@param serviceClass ServiceClass
 	@return ServiceType
 ]=]
-function Service.new(config: ServiceConfig): ServiceType
-	assert(config, "Config must be provided")
-	assert(typeof(config) == "table", "Config must be a table")
-	assert(config.name, "Config must have a name")
+function Service.new(serviceClass: ServiceClass): ServiceType
+	assert(serviceClass, "Config must be provided")
+	assert(typeof(serviceClass) == "table", "Config must be a table")
+	assert(serviceClass.name, "Config must have a name")
 
-	if config.private then
+	serviceClass.__index = serviceClass
+
+	if serviceClass.private then
 		assert(
-			typeof(config.private) == "table" or typeof(config.private) == "boolean",
+			typeof(serviceClass.private) == "table" or typeof(serviceClass.private) == "boolean",
 			"Config.private must be a table or boolean"
 		)
 	end
 
-	local self = setmetatable(config, Service) :: ServiceType
+	local self = setmetatable(serviceClass, Service) :: ServiceType
 
 	self._redService = true
-	self._services = {}
+	self._methods = {}
 
 	return self
 end

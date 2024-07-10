@@ -1,5 +1,14 @@
 --[=[
 	@class Store
+
+	#### Setup
+	```lua
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+	local red = require(ReplicatedStorage.Packages.red)
+
+	local store: red.StoreType = red.Store.new() -- Constructs a new store
+	```
 ]=]
 
 --!strict
@@ -18,6 +27,8 @@ local isServer: boolean = RunService:IsServer()
 local Store = {}
 Store.__index = Store
 
+local _middleware: { (action: Types.Action) -> () } = {}
+
 export type StoreType = typeof(setmetatable(
 	{} :: {
 		_connections: { [number]: RBXScriptConnection },
@@ -27,8 +38,38 @@ export type StoreType = typeof(setmetatable(
 ))
 
 --[=[
+	Applies middleware to the store
+
+	The middleware function will be called before the action is dispatched.
+
+	```lua
+	store:use(function(action: red.Action)
+		if action.type == "HELLO_WORLD" then
+			action.payload.message = action.payload.message .. "!"
+		end
+	end)
+
+	store:dispatch({
+		type = "HELLO_WORLD",
+		payload = {
+			message = "Hello World"
+		}
+	})
+
+	-- Payload after middleware: "Hello World!"
+	```
+
+	@within Store
+	@method use
+	@param middleware (action: Types.Action) -> ()
+]=]
+function Store.use(middleware: (action: Types.Action) -> ())
+	_middleware[#_middleware + 1] = middleware
+end
+
+--[=[
 	Creates a new store instance
-	
+
 	@return StoreType
 ]=]
 function Store.new(): StoreType
@@ -42,13 +83,59 @@ end
 
 --[=[
 	Dispatches an action
-	
+
 	The first argument can be a player or a table of players, which will determine who receives the action event.
-	
+
 	If the first argument is ```true```, then the action will be fired to ***all clients***.
-	
+
 	The second argument is the action object. (Types.Action)
-	
+
+	```lua
+	local Players = game:GetService("Players")
+
+	-- Dispatch to the server
+	store:dispatch({
+		type = "PLAYER_KILL",
+		player = Players.Player1 -- The first argument in the binded action.
+	})
+
+	store:dispatch({
+		type = "PLAYER_DAMAGE",
+		player = { Players.Player2, Players.Player3 }
+		payload = { -- The second argument in the binded action.
+			damage = 50
+		}
+	})
+
+	store:dispatch({ -- Called from the server
+		type = "GAME_STOP",
+		payload = { -- This would be the first argument since there is no reason to include a player parameter.
+			message = "Game over"
+		}
+	})
+
+	-- Dispatch to all clients
+	store:dispatch(true, {
+		type = "UI_NOTIFICATION",
+		payload = {
+			text = "Hello World!"
+		}
+	})
+
+	-- Dispatch to one client
+	store:dispatch(Players.Player1, {
+		type = "UI_SPECTATE_START"
+	})
+
+	-- Dispatch to multiple clients
+	store:dispatch({ Players.Player2, Players.Player3 }, {
+		type = "UI_GAME_TIMER",
+		payload = {
+			duration = 60 -- Show a countdown timer lasting 60 seconds
+		}
+	})
+	```
+
 	@within Store
 	@method dispatch
 	@param target Player | { Player } | true
@@ -73,6 +160,15 @@ function Store.dispatch(_self: StoreType, ...: any)
 
 		if not action.success and not action.err and action.type then
 			action.err = action.type .. " - Error occured"
+		end
+	end
+
+	-- Handle middleware
+	for _, middleware: (action: Types.Action) -> () in _middleware do
+		local success, err: any = pcall(middleware, action)
+
+		if not success then
+			warn("Middleware error: " .. (tostring(err) or "Unknown error"))
 		end
 	end
 
@@ -110,7 +206,34 @@ function Store.dispatch(_self: StoreType, ...: any)
 end
 
 --[=[
-	Dispatches an action with a unique id, then yields and watches for incoming actions with the same tag, and returns the action as a result
+	Dispatches an action and yields until an action is returned with a result.
+	If the action is not returned within the timeout, the get request will fail.
+
+	```lua
+	-- Client
+	local fetch = store:get({ -- Fetch player stats from the server
+		type = "PLAYER_STATS",
+	})
+	local stats = fetch.success and fetch.payload.stats
+
+	if stats then -- Successfull stats fetch
+		print(stats)
+	end
+
+	-- Server
+	local fetch = store:get({ -- Fetch player stats from the server
+		type = "PLAYER_STATS",
+		player = Players.Player1 -- If action is for a player, this parameter must be defined
+	})
+	local stats = fetch.success and fetch.payload.stats
+
+	if stats then -- Successfull stats fetch
+		print(stats)
+	else
+		warn(fetch.err)
+	end
+	```
+
 	@within Store
 	@method get
 	@param self StoreType
@@ -206,9 +329,9 @@ end
 
 --[=[
 	Sets up a subscription to listen for actions dispatched by the store
-	
+
 	When an action is dispatched, the callback function will be called with the action as an argument
-	
+
 	@within Store
 	@method subscribe
 	@param callback (action: Types.Action) -> ()
@@ -253,7 +376,23 @@ end
 
 --[=[
 	Unsubscribes a listener from the store using the subscription id returned from ```Store:subscribe()```.
-	
+
+	```lua
+	-- Setup the listener
+	local connectionId
+
+	connectionId = store:subscribe(function(action: red.Action)
+		if action.type == "HELLO_WORLD" then
+			print(action.type)
+			store:unsubscribe(connectionId) -- Stop receiving actions
+		end
+	end)
+
+	task.wait(2)
+
+	store:unsubscribe(connectionId) -- Stop receiving actions
+	```
+
 	@within Store
 	@method unsubscribe
 	@param id Types.SubscriptionId

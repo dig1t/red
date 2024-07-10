@@ -1,4 +1,19 @@
---- @class Server
+--[=[
+@class Server
+
+The Server class is used to create a new server instance.
+
+#### Setup
+```lua
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local red = require(ReplicatedStorage.Packages.red)
+
+local server: red.ServerType = red.Server.new() -- Constructs a new server
+
+server:init() -- Starts listening to dispatches
+```
+]=]
 
 --!strict
 
@@ -52,11 +67,19 @@ end
 --[=[
 	Use this method to bind a service action to the server.
 	
-	Example:
+	Examples:
 	```lua
 	server:bind("ACTION_TYPE", function(player: Player, payload: Types.ActionPayload?)
 		-- Do something
 	end)
+	```
+	
+	```lua
+	server:bind("PLAYER_KILL", function(player)
+		if player and player.Character then
+			player.Character:BreakJoints()
+		end
+	end, true)
 	```
 	
 	@within Server

@@ -2,7 +2,7 @@
 	@class Controller
 	
 	Controller is a class that is used to manage different features of the game.
-	It can can ran on both the client and server.
+	It can be ran on the client and server.
 	
 	```lua
 	local controller = red.Controller.new({
@@ -13,11 +13,12 @@
 		print("init")
 	end)
 	
-	-- You can subscribe to the red store to listen for actions
+	-- You can subscribe to red actions through the controller
 	controller:subscribe(function(action: red.Action)
 		print(action.type)
 	end)
 	
+	-- You can also listen to the stepped event
 	controller:stepped(function(deltaTime: number)
 		self.timeElapsed = self.time + deltaTime
 		print(self.timeElapsed)
