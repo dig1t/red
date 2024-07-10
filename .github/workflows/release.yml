@@ -93,14 +93,15 @@ jobs:
           echo "commitSHA=$COMMIT_SHA" >> $GITHUB_OUTPUT
 
       # Create GitHub release
-      - name: Create ${{ steps.version.outputs.version }} Runner Release
-        uses: actions/create-release@master
+      - uses: release-drafter/release-drafter@v6
         id: createRelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v${{ steps.version.outputs.version }}"
-          release_name: "v${{ steps.version.outputs.version }}"
+          name: 'v${{ steps.version.outputs.version }}'
+          tag: 'v${{ steps.version.outputs.version }}'
+          version: ${{ steps.version.outputs.version }}
+          publish: true
           commitish: ${{ steps.commit-files.outputs.commitSHA }}
 
       - name: Install aftman dependencies
