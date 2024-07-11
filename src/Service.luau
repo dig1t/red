@@ -131,7 +131,8 @@ function Service.new(serviceClass: ServiceClass): ServiceType
 
 	if serviceClass.private then
 		assert(
-			typeof(serviceClass.private) == "table" or typeof(serviceClass.private) == "boolean",
+			typeof(serviceClass.private) == "table"
+				or typeof(serviceClass.private) == "boolean",
 			"Config.private must be a table or boolean"
 		)
 	end

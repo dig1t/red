@@ -85,14 +85,20 @@ end)
 function Controller.new(config: ControllerConfig): ControllerType
 	assert(typeof(config) == "table", "Expected config to be a table")
 	assert(typeof(config.name) == "string", "Expected config.name to be a string")
-	assert(not controllers[config.name], "Controller with name " .. config.name .. " already exists")
+	assert(
+		not controllers[config.name],
+		"Controller with name " .. config.name .. " already exists"
+	)
 
 	if config.init then
 		assert(typeof(config.init) == "function", "Expected config.init to be a function")
 	end
 
 	if config.subscribe then
-		assert(typeof(config.subscribe) == "function", "Expected config.subscribe to be a function")
+		assert(
+			typeof(config.subscribe) == "function",
+			"Expected config.subscribe to be a function"
+		)
 	end
 
 	local self = setmetatable({}, Controller)
@@ -143,7 +149,10 @@ end
 	@param _controllers Instance | { ModuleScript }
 	@param requiredSuffix string?
 ]=]
-function Controller.addModules(_controllers: Instance | { ModuleScript }, requiredSuffix: string?)
+function Controller.addModules(
+	_controllers: Instance | { ModuleScript },
+	requiredSuffix: string?
+)
 	local modules: { ModuleScript } = {}
 
 	if typeof(_controllers) == "Instance" then
@@ -153,7 +162,11 @@ function Controller.addModules(_controllers: Instance | { ModuleScript }, requir
 			_controllers = {}
 
 			for _, module: Instance in ipairs(children) do
-				if module and module:IsA("ModuleScript") and module.Name:sub(-#requiredSuffix) == requiredSuffix then
+				if
+					module
+					and module:IsA("ModuleScript")
+					and module.Name:sub(-#requiredSuffix) == requiredSuffix
+				then
 					local _module: ModuleScript = module
 					modules[#modules + 1] = _module
 				end
@@ -175,7 +188,10 @@ function Controller.addModules(_controllers: Instance | { ModuleScript }, requir
 		local newController: ControllerType = require(module) :: any
 
 		if newController.init then
-			assert(typeof(newController.init) == "function", "Expected controller.init to be a function")
+			assert(
+				typeof(newController.init) == "function",
+				"Expected controller.init to be a function"
+			)
 
 			task.spawn(function()
 				debug.setmemorycategory(newController.name)
@@ -200,7 +216,10 @@ function Controller.start()
 			continue
 		end
 
-		assert(typeof(controller.ready) == "function", "Expected controller.ready to be a function")
+		assert(
+			typeof(controller.ready) == "function",
+			"Expected controller.ready to be a function"
+		)
 
 		task.spawn(function()
 			debug.setmemorycategory(controller.name)
