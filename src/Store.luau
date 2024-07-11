@@ -141,8 +141,8 @@ end
 	@param target Player | { Player } | true
 	@param action Types.Action
 ]=]
-function Store.dispatch(_self: StoreType, ...: any)
-	local args = { ... }
+function Store.dispatch(_self: StoreType, ...: { any })
+	local args: { any } = { ... }
 
 	local action: Types.Action = #args == 1 and args[1] or args[2]
 
@@ -172,21 +172,22 @@ function Store.dispatch(_self: StoreType, ...: any)
 		end
 	end
 
-	-- If no recipient is specified, then
-	-- the action will fire to the server
-	-- From either the client (client-to-server) or the server (server-to-server)
 	if #args == 1 then
+		-- If no recipient is specified, then
+		-- the action will fire to the server
+		-- From either the client (client-to-server) or the server (server-to-server)
+
 		if isServer then
 			remotes.Server:Fire(action)
 		else
 			remotes.Client:FireServer(action)
 		end
-
-	-- If a recipient is specified, then
-	-- the action will fire to the client(s)
-	-- from the server. If the recipient is
-	-- a table, then the action will fire
 	elseif #args == 2 then
+		-- If a recipient is specified, then
+		-- the action will fire to the client(s)
+		-- from the server. If the recipient is
+		-- a table, then the action will fire
+
 		assert(isServer, "Dispatcher must be the server")
 
 		if recipient and not fireToAll then
@@ -238,13 +239,13 @@ end
 	@method get
 	@param self StoreType
 	@param action Types.Action
-	@return Types.Action?
+	@return Types.Action
 ]=]
-function Store.get(self: StoreType, action: Types.Action): Types.Action?
+function Store.get(self: StoreType, action: Types.Action): Types.Action
 	assert(typeof(action) == "table", "Action must be a table")
 	assert(action.type, "Action must have an action type")
 
-	local uid = Util.randomString(8)
+	local uid: string = Util.randomString(8)
 
 	action.uid = uid
 	action.method = "get"
@@ -313,6 +314,9 @@ function Store.get(self: StoreType, action: Types.Action): Types.Action?
 	end
 
 	return res
+		or {
+			err = "Action failed to return a result. Timeout exceeded",
+		} :: Types.Action
 end
 
 function Store._callSubscribers(self: StoreType, action: Types.Action, safeCall: boolean?)
