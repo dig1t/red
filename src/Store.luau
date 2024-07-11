@@ -141,7 +141,7 @@ end
 	@param target Player | { Player } | true
 	@param action Types.Action
 ]=]
-function Store.dispatch(_self: StoreType, ...: { any })
+function Store.dispatch(_self: StoreType, ...: any)
 	local args: { any } = { ... }
 
 	local action: Types.Action = #args == 1 and args[1] or args[2]
@@ -287,8 +287,8 @@ function Store.get(self: StoreType, action: Types.Action): Types.Action
 
 		self:dispatch(action)
 	end)
-		:andThen(function(_action)
-			res = _action
+		:andThen(function(result: Types.Action)
+			res = result
 			responseReceived = true
 		end)
 		:catch(function(err: string)
