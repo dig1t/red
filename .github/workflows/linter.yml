@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: true
 
       - name: Install dependencies
         uses: ok-nick/setup-aftman@v0.4.2
