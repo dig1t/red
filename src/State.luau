@@ -143,7 +143,10 @@ end
 	@param path string | number | boolean
 	@return any
 ]=]
-function State.get(self: StateType, path: string | number | boolean): any -- Todo: support for nested tables
+function State.get(
+	self: StateType,
+	path: string | number | boolean
+): any -- Todo: support for nested tables
 	if not self._context then
 		return nil
 	end
@@ -180,7 +183,10 @@ end
 	@param callback (prevState: any, newState: any) -> nil
 	@return SubscriptionId?
 ]=]
-function State.listen(self: StateType, callback: (prevState: any, newState: any) -> ()): Types.SubscriptionId?
+function State.listen(
+	self: StateType,
+	callback: (prevState: any, newState: any) -> ()
+): Types.SubscriptionId?
 	if not self._listeners then
 		return
 	end

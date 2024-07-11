@@ -88,7 +88,12 @@ end
 	@param reducer () -> any
 	@param private boolean?
 ]=]
-function Server.bind(self: ServerType, actionType: string, reducer: () -> any, private: boolean?)
+function Server.bind(
+	self: ServerType,
+	actionType: string,
+	reducer: () -> any,
+	private: boolean?
+)
 	assert(typeof(actionType) == "string", "Action type must be a string")
 	assert(typeof(reducer) == "function", "Action must be a function")
 
@@ -108,7 +113,10 @@ end
 	@param id string
 ]=]
 function Server.unbind(self: ServerType, id: string)
-	assert(self._reducers[id] or self._privateReducers[id], "Action reducer does not exist")
+	assert(
+		self._reducers[id] or self._privateReducers[id],
+		"Action reducer does not exist"
+	)
 
 	self._reducers[id] = nil
 	self._privateReducers[id] = nil
@@ -127,7 +135,10 @@ end
 	@param moduleInstance ModuleScript
 ]=]
 function Server.loadService(self: ServerType, moduleInstance: ModuleScript)
-	assert(typeof(moduleInstance) == "Instance" and moduleInstance:IsA("ModuleScript"), "Path is not a ModuleScript")
+	assert(
+		typeof(moduleInstance) == "Instance" and moduleInstance:IsA("ModuleScript"),
+		"Path is not a ModuleScript"
+	)
 
 	local service = require(moduleInstance) :: any
 
@@ -148,12 +159,15 @@ function Server.loadService(self: ServerType, moduleInstance: ModuleScript)
 			continue
 		end
 
-		local actionType: string = string.upper(service.name) .. "_" .. string.upper(reducerKey)
+		local actionType: string = string.upper(service.name)
+			.. "_"
+			.. string.upper(reducerKey)
 
 		self:bind(
 			actionType,
 			reducerFn,
-			typeof(service.private) == "table" and table.find(service.private, actionType) ~= nil -- Check if reducer is private
+			typeof(service.private) == "table"
+					and table.find(service.private, actionType) ~= nil -- Check if reducer is private
 				or service.private == true -- Check if all reducers are private
 		)
 	end
@@ -199,14 +213,17 @@ function Server.localCall(self: ServerType, actionType: string, ...): any
 	assert(typeof(actionType) == "string", "Action type must be a string")
 	assert(
 		self._reducers[actionType] or self._privateReducers[actionType],
-		"Action \"" .. actionType .. "\" does not exist"
+		'Action "' .. actionType .. '" does not exist'
 	)
 
 	local serviceName: string = string.lower(string.split(actionType, "_")[1])
 	local service: Service.ServiceType = self._services[serviceName]
 
-	local success: boolean, res: Types.Action =
-		pcall(self._reducers[actionType] or self._privateReducers[actionType], service, ...)
+	local success: boolean, res: Types.Action = pcall(
+		self._reducers[actionType] or self._privateReducers[actionType],
+		service,
+		...
+	)
 
 	if not success then
 		error(res, 2)
@@ -233,7 +250,11 @@ end
 	@param player Player?
 	@return Types.Action?
 ]=]
-function Server._call(self: ServerType, action: Types.Action, player: Player?): Types.Action?
+function Server._call(
+	self: ServerType,
+	action: Types.Action,
+	player: Player?
+): Types.Action?
 	assert(action and typeof(action.type) == "string", "Action type must be a string")
 
 	if not (self._reducers[action.type] or self._privateReducers[action.type]) then
@@ -246,10 +267,14 @@ function Server._call(self: ServerType, action: Types.Action, player: Player?): 
 
 	local args = {}
 
-	local usingPlayerArgument: boolean? = typeof(player) == "Instance" and player:IsA("Player")
-	local usingActionPlayer: boolean? = typeof(action.player) == "Instance" and action.player:IsA("Player")
+	local usingPlayerArgument: boolean? = typeof(player) == "Instance"
+		and player:IsA("Player")
+	local usingActionPlayer: boolean? = typeof(action.player) == "Instance"
+		and action.player:IsA("Player")
 
-	local targetPlayer: Player? = (usingPlayerArgument and player) or (usingActionPlayer and action.player) or nil
+	local targetPlayer: Player? = (usingPlayerArgument and player)
+		or (usingActionPlayer and action.player)
+		or nil
 
 	table.insert(args, targetPlayer) -- Check to make sure the player argument is a valid player
 
@@ -271,7 +296,8 @@ function Server._call(self: ServerType, action: Types.Action, player: Player?): 
 
 	if not success then
 		task.spawn(function()
-			local _player = targetPlayer and targetPlayer:IsA("Player") and targetPlayer or nil
+			local _player = targetPlayer and targetPlayer:IsA("Player") and targetPlayer
+				or nil
 			local userId: number = _player and _player.UserId or 0
 
 			if typeof(res) == "string" then
@@ -313,7 +339,10 @@ function Server.init(self: ServerType)
 			continue
 		end
 
-		assert(typeof(service.init) == "function", "Expected service.init to be a function")
+		assert(
+			typeof(service.init) == "function",
+			"Expected service.init to be a function"
+		)
 
 		task.spawn(function()
 			debug.setmemorycategory(service.name)
@@ -340,7 +369,13 @@ function Server.init(self: ServerType)
 		-- If the action's method is "get" fire it back
 		-- to the sender
 		if action.method and action.method == "get" then
-			assert(typeof(res) == "table", action.type .. " - Cannot return a " .. typeof(res) .. " type to a client.")
+			assert(
+				typeof(res) == "table",
+				action.type
+					.. " - Cannot return a "
+					.. typeof(res)
+					.. " type to a client."
+			)
 
 			res.uid = action.uid
 
@@ -373,7 +408,10 @@ function Server.init(self: ServerType)
 		if action.method and action.method == "get" then
 			assert(
 				typeof(res) == "table",
-				action.type .. " - Cannot return a " .. typeof(res) .. " type to a client. Only tables can be returned."
+				action.type
+					.. " - Cannot return a "
+					.. typeof(res)
+					.. " type to a client. Only tables can be returned."
 			)
 
 			res.uid = action.uid

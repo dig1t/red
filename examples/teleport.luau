@@ -2,8 +2,8 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local red = require(ReplicatedStorage.Packages.red)
 local Util = require(ReplicatedStorage.Packages.Util)
+local red = require(ReplicatedStorage.Packages.red)
 
 local store = red.Store.new()
 
@@ -23,8 +23,8 @@ script.Parent.Touched:connect(function(part)
 			type = "PLAYER_TELEPORT",
 			player = player,
 			payload = {
-				location = CFrame.new(Util.random(-100, 100), 10, Util.random(-100, 100))
-			}
+				location = CFrame.new(Util.random(-100, 100), 10, Util.random(-100, 100)),
+			},
 		})
 
 		task.wait(1)

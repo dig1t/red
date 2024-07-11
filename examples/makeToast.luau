@@ -2,8 +2,8 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local red = require(ReplicatedStorage.Packages.red)
 local Util = require(ReplicatedStorage.Packages.Util)
+local red = require(ReplicatedStorage.Packages.red)
 
 local store = red.Store.new()
 
@@ -23,8 +23,8 @@ script.Parent.Touched:Connect(function(part)
 			type = "UI_TOAST",
 			player = player,
 			payload = {
-				message = "Touched red part " .. os.clock()
-			}
+				message = "Touched red part " .. os.clock(),
+			},
 		})
 
 		task.wait(1)

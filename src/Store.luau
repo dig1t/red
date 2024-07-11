@@ -265,19 +265,23 @@ function Store.get(self: StoreType, action: Types.Action): Types.Action?
 					end
 				end
 			)
-			connections[#connections + 1] = remotes.Server.Event:Connect(function(_action: Types.Action)
-				-- From server
-				if _action.method == "get_result" and _action.uid == uid then
-					resolve(_action)
+			connections[#connections + 1] = remotes.Server.Event:Connect(
+				function(_action: Types.Action)
+					-- From server
+					if _action.method == "get_result" and _action.uid == uid then
+						resolve(_action)
+					end
 				end
-			end)
+			)
 		else
-			connections[#connections + 1] = remotes.Client.OnClientEvent:Connect(function(_action: Types.Action)
-				-- From server
-				if _action.method == "get_result" and _action.uid == uid then
-					resolve(_action)
+			connections[#connections + 1] = remotes.Client.OnClientEvent:Connect(
+				function(_action: Types.Action)
+					-- From server
+					if _action.method == "get_result" and _action.uid == uid then
+						resolve(_action)
+					end
 				end
-			end)
+			)
 		end
 
 		self:dispatch(action)
@@ -337,8 +341,14 @@ end
 	@param callback (action: Types.Action) -> ()
 	@return Types.SubscriptionId
 ]=]
-function Store.subscribe(self: StoreType, callback: (action: Types.Action) -> ()): Types.SubscriptionId
-	assert(typeof(callback) == "function", "Callback argument must exist and be a function")
+function Store.subscribe(
+	self: StoreType,
+	callback: (action: Types.Action) -> ()
+): Types.SubscriptionId
+	assert(
+		typeof(callback) == "function",
+		"Callback argument must exist and be a function"
+	)
 
 	local subscriptionId: Types.SubscriptionId = Util.randomString(8) -- Unique reference ID used for unsubscribing
 
@@ -356,9 +366,11 @@ function Store.subscribe(self: StoreType, callback: (action: Types.Action) -> ()
 			)
 
 			-- From server
-			self._connections[#self._connections + 1] = remotes.Server.Event:Connect(function(action: Types.Action)
-				self:_callSubscribers(action, true)
-			end)
+			self._connections[#self._connections + 1] = remotes.Server.Event:Connect(
+				function(action: Types.Action)
+					self:_callSubscribers(action, true)
+				end
+			)
 		else
 			-- From client
 			self._connections[#self._connections + 1] = remotes.Client.OnClientEvent:Connect(
@@ -398,7 +410,10 @@ end
 	@param id Types.SubscriptionId
 ]=]
 function Store.unsubscribe(self: StoreType, id: Types.SubscriptionId)
-	assert(self._subscribers[id], "Store:unsubscribe() - Event listener id does not exist")
+	assert(
+		self._subscribers[id],
+		"Store:unsubscribe() - Event listener id does not exist"
+	)
 
 	self._subscribers[id] = nil
 

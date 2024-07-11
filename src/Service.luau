@@ -105,17 +105,16 @@ export type ServiceClass = {
 	[any]: any,
 }
 
-export type ServiceType = typeof(setmetatable(
-	{} :: {
-		_redService: true,
-		_methods: {
-			[string]: any,
-		},
-		name: string,
-		[any]: any,
+export type ServiceProps = {
+	_redService: true,
+	_methods: {
+		[string]: any,
 	},
-	Service
-))
+	name: string,
+	[any]: any,
+}
+
+export type ServiceType = typeof(setmetatable({} :: ServiceProps, Service))
 
 --[=[
 	Creates a new service instance
@@ -132,7 +131,8 @@ function Service.new(serviceClass: ServiceClass): ServiceType
 
 	if serviceClass.private then
 		assert(
-			typeof(serviceClass.private) == "table" or typeof(serviceClass.private) == "boolean",
+			typeof(serviceClass.private) == "table"
+				or typeof(serviceClass.private) == "boolean",
 			"Config.private must be a table or boolean"
 		)
 	end

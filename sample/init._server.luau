@@ -1,10 +1,10 @@
 --!nocheck
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local red = require(ReplicatedStorage.Packages.red)
 local Util = require(ReplicatedStorage.Packages.Util)
+local red = require(ReplicatedStorage.Packages.red)
 
 local server = red.Server.new()
 
@@ -40,8 +40,8 @@ local function playerAdded(player)
 			type = "PLAYER_TELEPORT",
 			player = player,
 			payload = {
-				location = CFrame.new(Util.random(-100, 100), 40, Util.random(-100, 100))
-			}
+				location = CFrame.new(Util.random(-100, 100), 40, Util.random(-100, 100)),
+			},
 		})
 	end)
 end
