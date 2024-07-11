@@ -2,7 +2,7 @@
 
 export type SubscriptionId = string
 
-export type ActionPayload = any
+export type ActionPayload<T> = T
 
 export type Action = {
 	uid: string?,
@@ -10,7 +10,7 @@ export type Action = {
 	player: Player?,
 	timeout: number?,
 	type: string,
-	payload: ActionPayload?,
+	payload: ActionPayload<any>,
 	success: boolean?,
 	err: string?,
 }

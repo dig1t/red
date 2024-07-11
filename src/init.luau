@@ -21,7 +21,7 @@ red.Controller = Controller
 
 export type SubscriptionId = string
 
-export type ActionPayload = Types.ActionPayload
+export type ActionPayload<T> = Types.ActionPayload<T>
 export type Action = Types.Action
 
 export type StateType = State.StateType
