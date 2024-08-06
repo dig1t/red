@@ -36,10 +36,10 @@ Server.__index = Server
 export type ServerType = typeof(setmetatable(
 	{} :: {
 		_reducers: {
-			[string]: (player: Player, payload: Types.ActionPayload?) -> any,
+			[string]: (player: Player, payload: Types.ActionPayload<any>?) -> any,
 		},
 		_privateReducers: {
-			[string]: (player: Player, payload: Types.ActionPayload?) -> any,
+			[string]: (player: Player, payload: Types.ActionPayload<any>?) -> any,
 		},
 		_services: {
 			[string]: any,
@@ -219,7 +219,7 @@ function Server.localCall(self: ServerType, actionType: string, ...): any
 	local serviceName: string = string.lower(string.split(actionType, "_")[1])
 	local service: Service.ServiceType = self._services[serviceName]
 
-	local success: boolean, res: Types.Action = pcall(
+	local success: boolean, res: Types.Action<any> = pcall(
 		self._reducers[actionType] or self._privateReducers[actionType],
 		service,
 		...
@@ -246,15 +246,15 @@ end
 	
 	@within Server
 	@method _call
-	@param action Types.Action
+	@param action Types.Action<any>
 	@param player Player?
-	@return Types.Action?
+	@return Types.Action<any>?
 ]=]
 function Server._call(
 	self: ServerType,
-	action: Types.Action,
+	action: Types.Action<any>,
 	player: Player?
-): Types.Action?
+): Types.Action<any>?
 	assert(action and typeof(action.type) == "string", "Action type must be a string")
 
 	if not (self._reducers[action.type] or self._privateReducers[action.type]) then
@@ -287,7 +287,7 @@ function Server._call(
 
 	service.name = serviceName
 
-	local success: boolean, res: Types.Action | string = pcall(
+	local success: boolean, res: Types.Action<any> | string = pcall(
 		self._reducers[action.type] or self._privateReducers[action.type],
 		service,
 		args[1], -- TODO: ??
@@ -309,7 +309,7 @@ function Server._call(
 			type = action.type,
 			err = typeof(res) == "string" and res or nil,
 			success = false,
-		} :: Types.Action
+		} :: Types.Action<any>
 	end
 
 	-- Add a success property to the action
@@ -322,7 +322,7 @@ function Server._call(
 		}
 	end
 
-	return res :: Types.Action
+	return res :: Types.Action<any>
 end
 
 --[=[
@@ -353,43 +353,45 @@ function Server.init(self: ServerType)
 	-- Hook listeners
 
 	-- store:dispatch() called from client
-	remotes.Client.OnServerEvent:Connect(function(player: Player, action: Types.Action)
-		if action.method and action.method == "get_result" then
-			return
+	remotes.Client.OnServerEvent:Connect(
+		function(player: Player, action: Types.Action<any>)
+			if action.method and action.method == "get_result" then
+				return
+			end
+
+			action.player = player
+
+			local res: Types.Action<any>? = self:_call(action, player)
+
+			if not res then
+				return
+			end
+
+			-- If the action's method is "get" fire it back
+			-- to the sender
+			if action.method and action.method == "get" then
+				assert(
+					typeof(res) == "table",
+					action.type
+						.. " - Cannot return a "
+						.. typeof(res)
+						.. " type to a client."
+				)
+
+				res.uid = action.uid
+
+				-- Change method to get result since
+				-- the server is now firing the result
+				-- to the client.
+				res.method = "get_result"
+
+				remotes.Client:FireClient(player, res)
+			end
 		end
-
-		action.player = player
-
-		local res: Types.Action? = self:_call(action, player)
-
-		if not res then
-			return
-		end
-
-		-- If the action's method is "get" fire it back
-		-- to the sender
-		if action.method and action.method == "get" then
-			assert(
-				typeof(res) == "table",
-				action.type
-					.. " - Cannot return a "
-					.. typeof(res)
-					.. " type to a client."
-			)
-
-			res.uid = action.uid
-
-			-- Change method to get result since
-			-- the server is now firing the result
-			-- to the client.
-			res.method = "get_result"
-
-			remotes.Client:FireClient(player, res)
-		end
-	end)
+	)
 
 	-- store:dispatch() called from server
-	remotes.Server.Event:Connect(function(action: Types.Action)
+	remotes.Server.Event:Connect(function(action: Types.Action<any>)
 		if action.method and action.method == "get_result" then
 			-- Ignore actions with get_result methods, these will
 			-- always be routed back into this listener

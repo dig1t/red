@@ -4,13 +4,13 @@ export type SubscriptionId = string
 
 export type ActionPayload<T> = T
 
-export type Action = {
+export type Action<T> = {
 	uid: string?,
 	method: string?,
 	player: Player?,
 	timeout: number?,
 	type: string,
-	payload: ActionPayload<any>,
+	payload: ActionPayload<T>,
 	success: boolean?,
 	err: string?,
 }
