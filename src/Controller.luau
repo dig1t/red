@@ -58,7 +58,7 @@ local store = Store.new()
 local controllers: { [string]: ControllerType } = {}
 local storeSubscriptions: { [number]: string } = {}
 
-local _subscriptionId: string = store:subscribe(function(action: Types.Action)
+local _subscriptionId: string = store:subscribe(function(action: Types.Action<any>)
 	for _, controllerId: string in pairs(storeSubscriptions) do
 		local controller: ControllerType = controllers[controllerId]
 

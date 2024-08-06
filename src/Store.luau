@@ -27,12 +27,12 @@ local isServer: boolean = RunService:IsServer()
 local Store = {}
 Store.__index = Store
 
-local _middleware: { (action: Types.Action) -> () } = {}
+local _middleware: { (action: Types.Action<any>) -> () } = {}
 
 export type StoreType = typeof(setmetatable(
 	{} :: {
 		_connections: { [number]: RBXScriptConnection },
-		_subscribers: { [Types.SubscriptionId]: (action: Types.Action) -> nil },
+		_subscribers: { [Types.SubscriptionId]: (action: Types.Action<any>) -> nil },
 	},
 	Store
 ))
@@ -61,9 +61,9 @@ export type StoreType = typeof(setmetatable(
 
 	@within Store
 	@method use
-	@param middleware (action: Types.Action) -> ()
+	@param middleware (action: Types.Action<any>) -> ()
 ]=]
-function Store.use(middleware: (action: Types.Action) -> ())
+function Store.use(middleware: (action: Types.Action<any>) -> ())
 	_middleware[#_middleware + 1] = middleware
 end
 
@@ -139,12 +139,12 @@ end
 	@within Store
 	@method dispatch
 	@param target Player | { Player } | true
-	@param action Types.Action
+	@param action Types.Action<any>
 ]=]
 function Store.dispatch(_self: StoreType, ...: any)
 	local args: { any } = { ... }
 
-	local action: Types.Action = #args == 1 and args[1] or args[2]
+	local action: Types.Action<any> = #args == 1 and args[1] or args[2]
 
 	assert(action ~= nil, "Dispatch requires an action")
 	assert(typeof(action) == "table", "Action must be a table")
@@ -164,7 +164,7 @@ function Store.dispatch(_self: StoreType, ...: any)
 	end
 
 	-- Handle middleware
-	for _, middleware: (action: Types.Action) -> () in _middleware do
+	for _, middleware: (action: Types.Action<any>) -> () in _middleware do
 		local success, err: any = pcall(middleware, action)
 
 		if not success then
@@ -238,10 +238,10 @@ end
 	@within Store
 	@method get
 	@param self StoreType
-	@param action Types.Action
-	@return Types.Action
+	@param action Types.Action<any>
+	@return Types.Action<any>
 ]=]
-function Store.get(self: StoreType, action: Types.Action): Types.Action
+function Store.get(self: StoreType, action: Types.Action<any>): Types.Action<any>
 	assert(typeof(action) == "table", "Action must be a table")
 	assert(action.type, "Action must have an action type")
 
@@ -251,13 +251,13 @@ function Store.get(self: StoreType, action: Types.Action): Types.Action
 	action.method = "get"
 
 	local connections: { RBXScriptConnection } = {}
-	local res: Types.Action?
+	local res: Types.Action<any>?
 	local responseReceived: boolean?
 
 	local promise = Promise.new(function(resolve, _reject)
 		if isServer then
 			connections[#connections + 1] = remotes.Client.OnServerEvent:Connect(
-				function(player: Player, _action: Types.Action)
+				function(player: Player, _action: Types.Action<any>)
 					-- From client
 					_action.player = player
 
@@ -267,7 +267,7 @@ function Store.get(self: StoreType, action: Types.Action): Types.Action
 				end
 			)
 			connections[#connections + 1] = remotes.Server.Event:Connect(
-				function(_action: Types.Action)
+				function(_action: Types.Action<any>)
 					-- From server
 					if _action.method == "get_result" and _action.uid == uid then
 						resolve(_action)
@@ -276,7 +276,7 @@ function Store.get(self: StoreType, action: Types.Action): Types.Action
 			)
 		else
 			connections[#connections + 1] = remotes.Client.OnClientEvent:Connect(
-				function(_action: Types.Action)
+				function(_action: Types.Action<any>)
 					-- From server
 					if _action.method == "get_result" and _action.uid == uid then
 						resolve(_action)
@@ -287,14 +287,14 @@ function Store.get(self: StoreType, action: Types.Action): Types.Action
 
 		self:dispatch(action)
 	end)
-		:andThen(function(result: Types.Action)
+		:andThen(function(result: Types.Action<any>)
 			res = result
 			responseReceived = true
 		end)
 		:catch(function(err: string)
 			res = {
 				err = err,
-			} :: Types.Action
+			} :: Types.Action<any>
 		end)
 		:finally(function()
 			for _, connection: RBXScriptConnection in pairs(connections) do
@@ -316,10 +316,14 @@ function Store.get(self: StoreType, action: Types.Action): Types.Action
 	return res
 		or {
 			err = "Action failed to return a result. Timeout exceeded",
-		} :: Types.Action
+		} :: Types.Action<any>
 end
 
-function Store._callSubscribers(self: StoreType, action: Types.Action, safeCall: boolean?)
+function Store._callSubscribers(
+	self: StoreType,
+	action: Types.Action<any>,
+	safeCall: boolean?
+)
 	if not action.type or action.method == "get" or action.method == "get_result" then
 		-- Ignore get method actions, these
 		-- will be processed by store:get()
@@ -342,12 +346,12 @@ end
 
 	@within Store
 	@method subscribe
-	@param callback (action: Types.Action) -> ()
+	@param callback (action: Types.Action<any>) -> ()
 	@return Types.SubscriptionId
 ]=]
 function Store.subscribe(
 	self: StoreType,
-	callback: (action: Types.Action) -> ()
+	callback: (action: Types.Action<any>) -> ()
 ): Types.SubscriptionId
 	assert(
 		typeof(callback) == "function",
@@ -362,7 +366,7 @@ function Store.subscribe(
 		if isServer then
 			-- From client
 			self._connections[#self._connections + 1] = remotes.Client.OnServerEvent:Connect(
-				function(player: Player, action: Types.Action)
+				function(player: Player, action: Types.Action<any>)
 					action.player = player
 
 					self:_callSubscribers(action, true)
@@ -371,14 +375,14 @@ function Store.subscribe(
 
 			-- From server
 			self._connections[#self._connections + 1] = remotes.Server.Event:Connect(
-				function(action: Types.Action)
+				function(action: Types.Action<any>)
 					self:_callSubscribers(action, true)
 				end
 			)
 		else
 			-- From client
 			self._connections[#self._connections + 1] = remotes.Client.OnClientEvent:Connect(
-				function(action: Types.Action)
+				function(action: Types.Action<any>)
 					self:_callSubscribers(action, false)
 				end
 			)
