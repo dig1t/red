@@ -1,29 +1,29 @@
 --[=[
-	@class Controller
-	
-	Controller is a class that is used to manage different features of the game.
-	It can be ran on the client and server.
-	
-	```lua
-	local controller = red.Controller.new({
-		name = "test";
-	})
-	
-	controller:init(function()
-		print("init")
-	end)
-	
-	-- You can subscribe to red actions through the controller
-	controller:subscribe(function(action: red.Action)
-		print(action.type)
-	end)
-	
-	-- You can also listen to the stepped event
-	controller:stepped(function(deltaTime: number)
-		self.timeElapsed = self.time + deltaTime
-		print(self.timeElapsed)
-	end)
-	```
+@class Controller
+
+Controller is a class that is used to manage different features of the game.
+It can be ran on the client and server.
+
+```lua
+local controller = red.Controller.new({
+	name = "test";
+})
+
+controller:init(function()
+	print("init")
+end)
+
+-- You can subscribe to red actions through the controller
+controller:subscribe(function(action: red.Action)
+	print(action.type)
+end)
+
+-- You can also listen to the stepped event
+controller:stepped(function(deltaTime: number)
+	self.timeElapsed = self.time + deltaTime
+	print(self.timeElapsed)
+end)
+```
 ]=]
 
 --!strict
@@ -77,10 +77,10 @@ RunService.Stepped:Connect(function(deltaTime: number)
 end)
 
 --[=[
-	Creates a new controller instance
-	
-	@param config ControllerConfig
-	@return ControllerType
+Creates a new controller instance
+
+@param config ControllerConfig
+@return ControllerType
 ]=]
 function Controller.new(config: ControllerConfig): ControllerType
 	assert(typeof(config) == "table", "Expected config to be a table")
@@ -111,12 +111,12 @@ function Controller.new(config: ControllerConfig): ControllerType
 end
 
 --[=[
-	Called when the controller is initialized
-	
-	@within Controller
-	@method destroy
+Called when the controller is initialized
+
+@within Controller
+@method Destroy
 ]=]
-function Controller.destroy(self: ControllerType)
+function Controller.Destroy(self: ControllerType)
 	controllers[self.name] = nil
 
 	local subscriptionIndex = table.find(storeSubscriptions, self.controllerId)
@@ -127,27 +127,17 @@ function Controller.destroy(self: ControllerType)
 end
 
 --[=[
-	Alias for Controller.destroy
-	
-	@within Controller
-	@method Destroy
-]=]
-function Controller.Destroy(self: ControllerType)
-	self:destroy()
-end
+Adds controller ModuleScripts from a folder or table
 
---[=[
-	Adds controller ModuleScripts from a folder or table
-	
-	Setting a requiredSuffix will only add modules that end with the suffix.
-	(e.g. "Controller" will only add modules that end with "Controller")
-	
-	This will call the ```init``` method on all controllers once they are added.
-	
-	Call ```Controller.start()``` to call the ```ready``` method on all controllers.
-	
-	@param _controllers Instance | { ModuleScript }
-	@param requiredSuffix string?
+Setting a requiredSuffix will only add modules that end with the suffix.
+(e.g. "Controller" will only add modules that end with "Controller")
+
+This will call the ```init``` method on all controllers once they are added.
+
+Call ```Controller.start()``` to call the ```ready``` method on all controllers.
+
+@param _controllers Instance | { ModuleScript }
+@param requiredSuffix string?
 ]=]
 function Controller.addModules(
 	_controllers: Instance | { ModuleScript },
@@ -207,9 +197,7 @@ function Controller.addModules(
 	end
 end
 
---[=[
-	Calls the ```ready``` method on all controllers.
-]=]
+--- Calls the ```ready``` method on all controllers.
 function Controller.start()
 	for _, controller: ControllerType in pairs(controllers) do
 		if not controller.ready then
@@ -229,10 +217,10 @@ function Controller.start()
 end
 
 --[=[
-	Gets a controller by name
-	
-	@param name string
-	@return ControllerType?
+Gets a controller by name
+
+@param name string
+@return ControllerType?
 ]=]
 function Controller.get(name: string): ControllerType?
 	assert(typeof(name) == "string", "Expected name to be a string")

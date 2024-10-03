@@ -1,5 +1,7 @@
 --[=[
 	@class Store
+	
+	Dispatcher for actions to be dispatched to the server or clients.
 
 	#### Setup
 	```lua
@@ -8,6 +10,36 @@
 	local red = require(ReplicatedStorage.Packages.red)
 
 	local store: red.StoreType = red.Store.new() -- Constructs a new store
+	
+	-- Client
+	store:subscribe(function(action: red.Action)
+		print(action.type)
+	end)
+	
+	store:dispatch({
+		type = "HELLO_WORLD",
+		payload = {
+			message = "Hello World"
+		}
+	})
+		
+	-- Server
+	
+	-- Dispatch to all clients
+	store:dispatch(true, {
+		type = "HELLO_WORLD",
+		payload = {
+			message = "Hello World"
+		}
+	})
+		
+	-- Dispatch to one client
+	store:dispatch(Players.Player1, {
+		type = "HELLO_WORLD",
+		payload = {
+			message = "Hello World"
+		}
+	})
 	```
 ]=]
 
@@ -177,9 +209,7 @@ function Store.dispatch(_self: StoreType, ...: any)
 		-- the action will fire to the server
 		-- From either the client (client-to-server) or the server (server-to-server)
 
-		if isServer then
-			remotes.Server:Fire(action)
-		else
+		if not isServer then
 			remotes.Client:FireServer(action)
 		end
 	elseif #args == 2 then
@@ -220,19 +250,6 @@ end
 	if stats then -- Successfull stats fetch
 		print(stats)
 	end
-
-	-- Server
-	local fetch = store:get({ -- Fetch player stats from the server
-		type = "PLAYER_STATS",
-		player = Players.Player1 -- If action is for a player, this parameter must be defined
-	})
-	local stats = fetch.success and fetch.payload.stats
-
-	if stats then -- Successfull stats fetch
-		print(stats)
-	else
-		warn(fetch.err)
-	end
 	```
 
 	@within Store
@@ -244,6 +261,7 @@ end
 function Store.get(self: StoreType, action: Types.Action<any>): Types.Action<any>
 	assert(typeof(action) == "table", "Action must be a table")
 	assert(action.type, "Action must have an action type")
+	assert(not isServer, "Store:get() must be called from the client")
 
 	local uid: string = Util.randomString(8)
 
@@ -255,35 +273,13 @@ function Store.get(self: StoreType, action: Types.Action<any>): Types.Action<any
 	local responseReceived: boolean?
 
 	local promise = Promise.new(function(resolve, _reject)
-		if isServer then
-			connections[#connections + 1] = remotes.Client.OnServerEvent:Connect(
-				function(player: Player, _action: Types.Action<any>)
-					-- From client
-					_action.player = player
-
-					if _action.method == "get_result" and _action.uid == uid then
-						resolve(_action)
-					end
+		connections[#connections + 1] = remotes.Client.OnClientEvent:Connect(
+			function(_action: Types.Action<any>)
+				if _action.method == "get_result" and _action.uid == uid then
+					resolve(_action)
 				end
-			)
-			connections[#connections + 1] = remotes.Server.Event:Connect(
-				function(_action: Types.Action<any>)
-					-- From server
-					if _action.method == "get_result" and _action.uid == uid then
-						resolve(_action)
-					end
-				end
-			)
-		else
-			connections[#connections + 1] = remotes.Client.OnClientEvent:Connect(
-				function(_action: Types.Action<any>)
-					-- From server
-					if _action.method == "get_result" and _action.uid == uid then
-						resolve(_action)
-					end
-				end
-			)
-		end
+			end
+		)
 
 		self:dispatch(action)
 	end)
@@ -364,7 +360,7 @@ function Store.subscribe(
 		-- Hook connections to start receiving events
 
 		if isServer then
-			-- From client
+			-- store:dispatch() called from client
 			self._connections[#self._connections + 1] = remotes.Client.OnServerEvent:Connect(
 				function(player: Player, action: Types.Action<any>)
 					action.player = player
@@ -372,15 +368,8 @@ function Store.subscribe(
 					self:_callSubscribers(action, true)
 				end
 			)
-
-			-- From server
-			self._connections[#self._connections + 1] = remotes.Server.Event:Connect(
-				function(action: Types.Action<any>)
-					self:_callSubscribers(action, true)
-				end
-			)
 		else
-			-- From client
+			-- store:dispatch() called from server
 			self._connections[#self._connections + 1] = remotes.Client.OnClientEvent:Connect(
 				function(action: Types.Action<any>)
 					self:_callSubscribers(action, false)

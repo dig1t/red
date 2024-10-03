@@ -1,6 +1,9 @@
 --[=[
 @class State
 
+The State class is used to manage state for anything.
+It can be used to store data for the game, UI, or any other feature.
+
 Usage example
 
 ```lua
@@ -36,7 +39,7 @@ state:remove("val") -- Removes val from the state
 
 state:reset()
 
-state:destroy()
+state:Destroy()
 
 local success = pcall(function()
 	state:set("val", 1)
@@ -65,10 +68,10 @@ export type StateType = typeof(setmetatable(
 ))
 
 --[=[
-	Creates a new state instance
+Creates a new state instance
 
-	@param initialState { [any]: any }? -- Initial state values
-	@return StateType
+@param initialState { [any]: any }? -- Initial state values
+@return StateType
 ]=]
 function State.new(initialState: { [any]: any }?): StateType
 	if initialState ~= nil then
@@ -95,53 +98,53 @@ end
 -- Number of first level children
 
 --[=[
-	Returns the length of the state
-	
-	Example:
-	```lua
-	local state = State.new({
-		val = 1,
-		time = tick(),
-		nest = {
-			val = 123123
-		}
-	})
-	
-	print(state:length()) -- expect 3
-	```
+Returns the length of the state
 
-	@within State
-	@method length
-	@return number
+Example:
+```lua
+local state = State.new({
+	val = 1,
+	time = tick(),
+	nest = {
+		val = 123123
+	}
+})
+
+print(state:length()) -- expect 3
+```
+
+@within State
+@method length
+@return number
 ]=]
 function State.length(self: StateType): number
 	return self._context and Util.tableLength(self._context) or 0
 end
 
 --[=[
-	Returns the value at the given path
+Returns the value at the given path
 
-	Example:
-	```lua
-	local state = State.new({
-		val = 1,
-		time = tick(),
-		nest = {
-			val = 123123
-		}
-	})
-	
-	print(state:get("val")) -- expect 1
-	print(state:get("nest.val")) -- expect 123123
-	
-	-- True as the argument returns the entire state
-	print(state:get(true)) -- expect { val = 1, time = tick(), nest = { val = 123123 } }
-	```
+Example:
+```lua
+local state = State.new({
+	val = 1,
+	time = tick(),
+	nest = {
+		val = 123123
+	}
+})
 
-	@within State
-	@method get
-	@param path string | number | boolean
-	@return any
+print(state:get("val")) -- expect 1
+print(state:get("nest.val")) -- expect 123123
+
+-- True as the argument returns the entire state
+print(state:get(true)) -- expect { val = 1, time = tick(), nest = { val = 123123 } }
+```
+
+@within State
+@method get
+@param path string | number | boolean
+@return any
 ]=]
 function State.get(
 	self: StateType,
@@ -161,27 +164,27 @@ function State.get(
 end
 
 --[=[
-	Listens for state changes
+Listens for state changes
 
-	Example:
-	```lua
-	local state = State.new({
-		val = 1,
-		time = tick(),
-		nest = {
-			val = 123123
-		}
-	})
-	
-	state:listen(function(prevState, newState)
-		print(prevState, newState)
-	end)
-	```
+Example:
+```lua
+local state = State.new({
+	val = 1,
+	time = tick(),
+	nest = {
+		val = 123123
+	}
+})
 
-	@within State
-	@method listen
-	@param callback (prevState: any, newState: any) -> nil
-	@return SubscriptionId?
+state:listen(function(prevState, newState)
+	print(prevState, newState)
+end)
+```
+
+@within State
+@method listen
+@param callback (prevState: any, newState: any) -> nil
+@return SubscriptionId?
 ]=]
 function State.listen(
 	self: StateType,
@@ -202,28 +205,28 @@ function State.listen(
 end
 
 --[=[
-	Unlistens for state changes
+Unlistens for state changes
 
-	Example:
-	```lua
-	local state = State.new({
-		val = 1,
-		time = tick(),
-		nest = {
-			val = 123123
-		}
-	})
-	
-	local subscriptionId = state:listen(function(prevState, newState)
-		print(prevState, newState)
-	end)
-	
-	state:unlisten(subscriptionId)
-	```
+Example:
+```lua
+local state = State.new({
+	val = 1,
+	time = tick(),
+	nest = {
+		val = 123123
+	}
+})
 
-	@within State
-	@method unlisten
-	@param subscriptionId SubscriptionId
+local subscriptionId = state:listen(function(prevState, newState)
+	print(prevState, newState)
+end)
+
+state:unlisten(subscriptionId)
+```
+
+@within State
+@method unlisten
+@param subscriptionId SubscriptionId
 ]=]
 function State.unlisten(self: StateType, subscriptionId: Types.SubscriptionId)
 	if not self._listeners then
@@ -248,26 +251,26 @@ function State.pushUpdates(self: StateType, prevState: any, newState: any)
 end
 
 --[=[
-	Pushes a new value to the state
+Pushes a new value to the state
 
-	Example:
-	```lua
-	local state = State.new({
-		val = 1,
-		time = tick(),
-		nest = {
-			val = 123123
-		}
-	})
-	
-	state:push("val", 2)
-	```
+Example:
+```lua
+local state = State.new({
+	val = 1,
+	time = tick(),
+	nest = {
+		val = 123123
+	}
+})
 
-	@within State
-	@method push
-	@param keyOrValue any -- The key of the pushed value or the value itself if the state is an array
-	@param value any? -- The value to push
-	@return any -- The key of the pushed value
+state:push("val", 2)
+```
+
+@within State
+@method push
+@param keyOrValue any -- The key of the pushed value or the value itself if the state is an array
+@param value any? -- The value to push
+@return any -- The key of the pushed value
 ]=]
 function State.push(self: StateType, keyOrValue: any, value: any?): any
 	if not self._context then
@@ -285,25 +288,25 @@ function State.push(self: StateType, keyOrValue: any, value: any?): any
 end
 
 --[=[
-	Resets the state to an empty table
+Resets the state to an empty table
 
-	Example:
-	```lua
-	local state = State.new({
-		val = 1,
-		time = tick(),
-		nest = {
-			val = 123123
-		}
-	})
-	
-	state:reset()
-	
-	state:get(true) -- expect {}
-	```
+Example:
+```lua
+local state = State.new({
+	val = 1,
+	time = tick(),
+	nest = {
+		val = 123123
+	}
+})
 
-	@within State
-	@method reset
+state:reset()
+
+state:get(true) -- expect {}
+```
+
+@within State
+@method reset
 ]=]
 function State.reset(self: StateType)
 	self:pushUpdates(self._context, {})
@@ -312,39 +315,39 @@ function State.reset(self: StateType)
 end
 
 --[=[
-	Sets the state with a new value
+Sets the state with a new value
 
-	Example:
-	```lua
-	local state = State.new({
-		val = 1,
-		time = tick(),
-		nest = {
-			val = 123123
-		}
-	})
-	
-	state:set("val", 11) -- Change val to 11
-	
-	state:set(function(prevState)
-		prevState.val = 111
-		
-		return prevState
-	end) -- Change val to 111
-	
-	state:set({
-		val = 1111
-	}) -- Change val to 1111
-	
-	state:set("nest.val", 11111) -- Change nest.val to 11111
-	
-	state:set("undefinedNest.val", 11111) -- Create undefinedNest and set val to 11111
-	```
+Example:
+```lua
+local state = State.new({
+	val = 1,
+	time = tick(),
+	nest = {
+		val = 123123
+	}
+})
 
-	@within State
-	@method set
-	@param newState any -- The new state value
-	@param value any? -- The value to set
+state:set("val", 11) -- Change val to 11
+
+state:set(function(prevState)
+	prevState.val = 111
+	
+	return prevState
+end) -- Change val to 111
+
+state:set({
+	val = 1111
+}) -- Change val to 1111
+
+state:set("nest.val", 11111) -- Change nest.val to 11111
+
+state:set("undefinedNest.val", 11111) -- Create undefinedNest and set val to 11111
+```
+
+@within State
+@method set
+@param newState any -- The new state value
+@param value any? -- The value to set
 ]=]
 function State.set(self: StateType, newState: any, value: any)
 	if not self._context then
@@ -400,26 +403,26 @@ function State.set(self: StateType, newState: any, value: any)
 end
 
 --[=[
-	Removes a value from the state
+Removes a value from the state
 
-	Example:
-	```lua
-	local state = State.new({
-		val = 1,
-		time = tick(),
-		nest = {
-			val = 123123
-		}
-	})
-	
-	state:remove("val") -- Removes val from the state
-	
-	state:get(true) -- expect { time = tick(), nest = { val = 123123 } }
-	```
+Example:
+```lua
+local state = State.new({
+	val = 1,
+	time = tick(),
+	nest = {
+		val = 123123
+	}
+})
 
-	@within State
-	@method remove
-	@param path string | number -- The path to the value to remove
+state:remove("val") -- Removes val from the state
+
+state:get(true) -- expect { time = tick(), nest = { val = 123123 } }
+```
+
+@within State
+@method remove
+@param path string | number -- The path to the value to remove
 ]=]
 function State.remove(self: StateType, path: string | number)
 	local prevState = Util.extend({}, self._context or {}) -- Create a local copy
@@ -449,45 +452,35 @@ function State.remove(self: StateType, path: string | number)
 end
 
 --[=[
-	Destroys the state
+Destroys the state
 
-	Example:
-	```lua
-	local state = State.new({
-		val = 1,
-		time = tick(),
-		nest = {
-			val = 123123
-		}
-	})
-	
-	state:destroy()
-	
-	local success = pcall(function()
-		state:set("val", 1)
-	end)
-	
-	print('state destroyed?', not success) -- expect: true
-	```
+Example:
+```lua
+local state = State.new({
+	val = 1,
+	time = tick(),
+	nest = {
+		val = 123123
+	}
+})
 
-	@within State
-	@method destroy
+state:Destroy()
+
+local success = pcall(function()
+	state:set("val", 1)
+end)
+
+print('state destroyed?', not success) -- expect: true
+```
+
+@within State
+@method Destroy
 ]=]
-function State.destroy(self: StateType)
+function State.Destroy(self: StateType)
 	self._context = nil
 	self._listeners = nil
 
 	pcall(setmetatable, self, {})
-end
-
---[=[
-	Alias for State.destroy
-
-	@within State
-	@method Destroy
-]=]
-function State.Destroy(self: StateType)
-	self:destroy()
 end
 
 return State

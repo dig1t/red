@@ -7,7 +7,7 @@ local Constants = require(script.Parent.Constants)
 
 local Util = {}
 
-function Util.getRemotes(): { Client: RemoteEvent, Server: BindableEvent }
+function Util.getRemotes(): { Client: RemoteEvent }
 	local remotes = RunService:IsClient()
 			and ReplicatedStorage:WaitForChild(Constants.REMOTE_FOLDER_NAME)
 		or ReplicatedStorage:FindFirstChild(Constants.REMOTE_FOLDER_NAME)
@@ -15,7 +15,6 @@ function Util.getRemotes(): { Client: RemoteEvent, Server: BindableEvent }
 	if remotes then
 		return {
 			Client = remotes:WaitForChild("Client", 60) :: RemoteEvent,
-			Server = remotes:WaitForChild("Server", 60) :: BindableEvent,
 		}
 	end
 
@@ -28,16 +27,10 @@ function Util.getRemotes(): { Client: RemoteEvent, Server: BindableEvent }
 	client.Name = "Client"
 	client.Parent = newRemotes
 
-	-- store:dispatch() calls from server to server
-	local server: BindableEvent = Instance.new("BindableEvent")
-	server.Name = "Server"
-	server.Parent = newRemotes
-
 	newRemotes.Parent = ReplicatedStorage
 
 	return {
 		Client = client,
-		Server = server,
 	}
 end
 

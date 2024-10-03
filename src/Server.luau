@@ -17,18 +17,12 @@ server:init() -- Starts listening to dispatches
 
 --!strict
 
-local Service = require(script.Parent.Service)
+local Store = require(script.Parent.Store)
 local Types = require(script.Parent.Types)
 local redUtil = require(script.Parent.redUtil)
 
 local remotes = redUtil.getRemotes()
-
-local ignoredReducerKeys = {
-	"init",
-	"_redService",
-	"name",
-	"private",
-}
+local store = Store.new()
 
 local Server = {}
 Server.__index = Server
@@ -38,267 +32,160 @@ export type ServerType = typeof(setmetatable(
 		_reducers: {
 			[string]: (player: Player, payload: Types.ActionPayload<any>?) -> any,
 		},
-		_privateReducers: {
-			[string]: (player: Player, payload: Types.ActionPayload<any>?) -> any,
-		},
-		_services: {
-			[string]: any,
-		},
 		started: boolean,
 	},
 	Server
 ))
 
 --[=[
-	Creates a new server instance
-	
-	@return ServerType
+Creates a new server instance
+
+@return ServerType
 ]=]
 function Server.new(): ServerType
-	local self = setmetatable({}, Server) :: ServerType
-
-	self._reducers = {}
-	self._privateReducers = {}
-	self._services = {}
-
-	return self
+	return setmetatable({
+		_reducers = {},
+		started = false,
+		store = store,
+	}, Server) :: ServerType
 end
 
 --[=[
-	Use this method to bind a service action to the server.
-	
-	Examples:
-	```lua
-	server:bind("ACTION_TYPE", function(player: Player, payload: Types.ActionPayload?)
-		-- Do something
-	end)
-	```
-	
-	```lua
-	server:bind("PLAYER_KILL", function(player)
-		if player and player.Character then
-			player.Character:BreakJoints()
-		end
-	end, true)
-	```
-	
-	@within Server
-	@method bind
-	@param actionType string
-	@param reducer () -> any
-	@param private boolean?
+Use this method to bind a reducer to the server.
+
+Examples:
+```lua
+server:bind("ACTION_TYPE", function(player: Player, payload: Types.ActionPayload?)
+	-- Do something
+end)
+```
+
+```lua
+server:bind("PLAYER_KILL", function(player)
+	if player and player.Character then
+		player.Character:BreakJoints()
+	end
+end, true)
+```
+
+@within Server
+@method bind
+@param actionType string
+@param reducer () -> ()
 ]=]
 function Server.bind(
 	self: ServerType,
 	actionType: string,
-	reducer: () -> any,
-	private: boolean?
+	reducer: (player: Player, payload: Types.ActionPayload<any>) -> ()
 )
 	assert(typeof(actionType) == "string", "Action type must be a string")
 	assert(typeof(reducer) == "function", "Action must be a function")
 
-	self[private == true and "_privateReducers" or "_reducers"][actionType] = reducer
+	self._reducers[actionType] = reducer
 end
 
 --[=[
-	Use this method to unbind a service action from the server.
-	
-	Example:
-	```lua
-	server:unbind("ACTION_TYPE")
-	```
-	
-	@within Server
-	@method unbind
-	@param id string
+Use this method to unbind a handler from the server.
+
+Example:
+```lua
+server:unbind("ACTION_TYPE")
+```
+
+@within Server
+@method unbind
+@param id string
 ]=]
 function Server.unbind(self: ServerType, id: string)
-	assert(
-		self._reducers[id] or self._privateReducers[id],
-		"Action reducer does not exist"
-	)
+	assert(self._reducers[id], "Action reducer does not exist")
 
 	self._reducers[id] = nil
-	self._privateReducers[id] = nil
 end
 
 --[=[
-	Use this method to load a service into the server.
-	
-	Example:
-	```lua
-	server:loadService(game.ServerScriptService.Server.Services.MyService)
-	```
-	
-	@within Server
-	@method loadService
-	@param moduleInstance ModuleScript
+Use this method to load a handler into the server.
+
+Example:
+```lua
+server:useHandler(game.ServerScriptService.Server.ActionHandlers.Players)
+```
+
+@within Server
+@method useHandler
+@param moduleInstance ModuleScript
 ]=]
-function Server.loadService(self: ServerType, moduleInstance: ModuleScript)
+function Server.useHandler(self: ServerType, moduleInstance: ModuleScript)
 	assert(
 		typeof(moduleInstance) == "Instance" and moduleInstance:IsA("ModuleScript"),
 		"Path is not a ModuleScript"
 	)
 
-	local service = require(moduleInstance) :: any
+	local handler = require(moduleInstance) :: any
 
-	assert(service.name, "Service does not have a name")
-	assert(service._redService, "Service is not a red service")
+	assert(typeof(handler) == "function", "Handler must be a function")
 
-	self._services[service.name] = service
+	debug.setmemorycategory(`Action Handler: {handler.Name}`)
+	handler(self)
+end
 
-	-- Iterate through service and format action names
-	-- to include the controller name
-	-- and capitalize all characters
-	for reducerKey, reducerFn in pairs(service) do
-		if
-			table.find(ignoredReducerKeys, reducerKey)
-			or typeof(reducerFn) ~= "function"
-			or typeof(reducerKey) ~= "string"
-		then
-			continue
-		end
+--[=[
+Use this method to load multiple handlers modules into the server.
 
-		local actionType: string = string.upper(service.name)
-			.. "_"
-			.. string.upper(reducerKey)
+Example:
+```lua
+server:useHandlers(game.ServerScriptService.Server.Handlers:GetChildren())
+```
 
-		self:bind(
-			actionType,
-			reducerFn,
-			typeof(service.private) == "table"
-					and table.find(service.private, actionType) ~= nil -- Check if reducer is private
-				or service.private == true -- Check if all reducers are private
+@within Server
+@method useHandlers
+@param handlers { ModuleScript }
+]=]
+function Server.useHandlers(self: ServerType, handlers: { ModuleScript } | Instance)
+	for _, handler: ModuleScript in
+		pairs(
+			typeof(handlers) == "Instance" and handlers:GetChildren()
+				or handlers :: { ModuleScript }
 		)
+	do
+		self:useHandler(handler)
 	end
 end
 
 --[=[
-	Use this method to load multiple service modules into the server.
-	
-	Example:
-	```lua
-	server:loadServices(game.ServerScriptService.Server.Services:GetChildren())
-	```
-	
-	@within Server
-	@method loadServices
-	@param services { ModuleScript }
-]=]
-function Server.loadServices(self: ServerType, services: { ModuleScript })
-	for _, service: ModuleScript in pairs(services) do
-		self:loadService(service)
-	end
-end
+Use this method to call an action.
 
--- @desc Function for interal use only
+Example:
+```lua
+server:_call(action, player)
+```
 
---[=[
-	Function for interal use only
-	
-	Arguments will be interpreted as either (actionType, payload) or (actionType, player, payload) depending on the number of arguments.
-	
-	Example:
-	```lua
-	server:localCall("ACTION_TYPE", player, payload)
-	```
-	
-	@within Server
-	@method localCall
-	@param actionType string
-	@param ... any
-	@return any
-]=]
-function Server.localCall(self: ServerType, actionType: string, ...): any
-	assert(typeof(actionType) == "string", "Action type must be a string")
-	assert(
-		self._reducers[actionType] or self._privateReducers[actionType],
-		'Action "' .. actionType .. '" does not exist'
-	)
-
-	local serviceName: string = string.lower(string.split(actionType, "_")[1])
-	local service: Service.ServiceType = self._services[serviceName]
-
-	local success: boolean, res: Types.Action<any> = pcall(
-		self._reducers[actionType] or self._privateReducers[actionType],
-		service,
-		...
-	)
-
-	if not success then
-		error(res, 2)
-	end
-
-	if typeof(res) == "table" and not res.err then
-		res.success = true
-	end
-
-	return res
-end
-
---[=[
-	Use this method to call an action.
-	
-	Example:
-	```lua
-	server:_call(action, player)
-	```
-	
-	@within Server
-	@method _call
-	@param action Types.Action<any>
-	@param player Player?
-	@return Types.Action<any>?
+@within Server
+@method _call
+@param action Types.Action<any>
+@param player Player?
+@return Types.Action<any>
 ]=]
 function Server._call(
 	self: ServerType,
 	action: Types.Action<any>,
-	player: Player?
-): Types.Action<any>?
+	player: Player
+): Types.Action<any>
 	assert(action and typeof(action.type) == "string", "Action type must be a string")
 
-	if not (self._reducers[action.type] or self._privateReducers[action.type]) then
-		return
-	elseif player and self._privateReducers[action.type] then
-		-- Player should not be calling a private action
-
-		return -- error(player.userId .. " attempted to call a private action")
+	if not self._reducers[action.type] then
+		return {
+			type = action.type,
+			err = "Action does not exist",
+			success = false,
+		} :: Types.Action<any>
 	end
 
-	local args = {}
-
-	local usingPlayerArgument: boolean? = typeof(player) == "Instance"
-		and player:IsA("Player")
-	local usingActionPlayer: boolean? = typeof(action.player) == "Instance"
-		and action.player:IsA("Player")
-
-	local targetPlayer: Player? = (usingPlayerArgument and player)
-		or (usingActionPlayer and action.player)
-		or nil
-
-	table.insert(args, targetPlayer) -- Check to make sure the player argument is a valid player
-
-	if action.payload and typeof(action.payload) == "table" then
-		args[#args + 1] = action.payload :: any
-	end
-
-	local serviceName: string = string.lower(string.split(action.type, "_")[1])
-	local service: Service.ServiceType = self._services[serviceName]
-
-	service.name = serviceName
-
-	local success: boolean, res: Types.Action<any> | string = pcall(
-		self._reducers[action.type] or self._privateReducers[action.type],
-		service,
-		args[1], -- TODO: ??
-		args[2] -- TODO: ??
-	)
+	local success: boolean, res: Types.Action<any> | string =
+		pcall(self._reducers[action.type], player, action.payload)
 
 	if not success then
 		task.spawn(function()
-			local _player = targetPlayer and targetPlayer:IsA("Player") and targetPlayer
-				or nil
-			local userId: number = _player and _player.UserId or 0
+			local userId: number = player.UserId
 
 			if typeof(res) == "string" then
 				error(res .. (userId and ` - UserId: {userId}` or ""), 2)
@@ -326,32 +213,12 @@ function Server._call(
 end
 
 --[=[
-	Initializes the server.
-	
-	This will call the ```init``` method on all services.
-	
-	@within Server
-	@method init
+Initializes the server.
+
+@within Server
+@method listen
 ]=]
-function Server.init(self: ServerType)
-	for _, service in pairs(self._services) do
-		if not service.init then
-			continue
-		end
-
-		assert(
-			typeof(service.init) == "function",
-			"Expected service.init to be a function"
-		)
-
-		task.spawn(function()
-			debug.setmemorycategory(service.name)
-			service:init()
-		end)
-	end
-
-	-- Hook listeners
-
+function Server.listen(self: ServerType)
 	-- store:dispatch() called from client
 	remotes.Client.OnServerEvent:Connect(
 		function(player: Player, action: Types.Action<any>)
@@ -359,13 +226,7 @@ function Server.init(self: ServerType)
 				return
 			end
 
-			action.player = player
-
-			local res: Types.Action<any>? = self:_call(action, player)
-
-			if not res then
-				return
-			end
+			local res: Types.Action<any> = self:_call(action, player)
 
 			-- If the action's method is "get" fire it back
 			-- to the sender
@@ -378,56 +239,39 @@ function Server.init(self: ServerType)
 						.. " type to a client."
 				)
 
-				res.uid = action.uid
-
 				-- Change method to get result since
 				-- the server is now firing the result
 				-- to the client.
 				res.method = "get_result"
+				res.uid = action.uid
 
 				remotes.Client:FireClient(player, res)
 			end
 		end
 	)
 
-	-- store:dispatch() called from server
-	remotes.Server.Event:Connect(function(action: Types.Action<any>)
-		if action.method and action.method == "get_result" then
-			-- Ignore actions with get_result methods, these will
-			-- always be routed back into this listener
-			-- after calling remotes.Server:Fire()
-			return
-		end
-
-		local res = self:_call(action)
-
-		if not res then
-			return
-		end
-
-		-- If the action's method is "get" fire it back
-		-- to the sender
-		if action.method and action.method == "get" then
-			assert(
-				typeof(res) == "table",
-				action.type
-					.. " - Cannot return a "
-					.. typeof(res)
-					.. " type to a client. Only tables can be returned."
-			)
-
-			res.uid = action.uid
-
-			-- Change method to get result since
-			-- the server is now firing the result
-			-- to the client.
-			res.method = "get_result"
-
-			remotes.Server:Fire(res)
-		end
-	end)
-
 	self.started = true
+end
+
+--[=[
+Use this method to dispatch an action to the store from a handler
+
+Example:
+```lua
+server:dispatch({
+	type = "ACTION_TYPE",
+	payload = {
+		-- Payload
+	}
+})
+```
+
+@within Server
+@method dispatch
+@param ... any
+]=]
+function Server.dispatch(_, ...)
+	store:dispatch(...)
 end
 
 return Server
