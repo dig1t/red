@@ -124,7 +124,7 @@ function Server.useHandler(self: ServerType, moduleInstance: ModuleScript)
 
 	assert(typeof(handler) == "function", "Handler must be a function")
 
-	debug.setmemorycategory(`Action Handler: {handler.Name}`)
+	debug.setmemorycategory(`Action Handler: {moduleInstance.Name}`)
 	handler(self)
 end
 
