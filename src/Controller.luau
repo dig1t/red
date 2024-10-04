@@ -177,6 +177,11 @@ function Controller.addModules(
 	for _, module: ModuleScript in pairs(modules) do
 		local newController: ControllerType = require(module) :: any
 
+		if not newController.name then
+			warn(`{module.Name} does not have a name`)
+			continue
+		end
+
 		if newController.init then
 			assert(
 				typeof(newController.init) == "function",
