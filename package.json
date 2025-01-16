@@ -8,7 +8,6 @@
     "build:rojo": "rojo build -o dev-build.rbxl build.project.json",
     "build:docs": "moonwave build",
     "build": "npm run build:dependencies && npm run build:rojo",
-
     "dev": "npm run build && dev-build.rbxl && npm start",
     "start": "rojo serve build.project.json"
   },
@@ -23,6 +22,6 @@
   },
   "homepage": "https://github.com/dig1t/red#readme",
   "dependencies": {
-    "moonwave": "^1.1.3"
+    "moonwave": "^1.2.1"
   }
 }
