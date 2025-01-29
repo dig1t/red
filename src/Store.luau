@@ -10,11 +10,11 @@
 	local red = require(ReplicatedStorage.Packages.red)
 
 	-- Client
-	red.Store.subscribe(function(action: red.Action)
+	red.subscribe(function(action: red.Action)
 		print(action.type)
 	end)
 
-	red.Store.dispatch({
+	red.dispatch({
 		type = "HELLO_WORLD",
 		payload = {
 			message = "Hello World"
@@ -24,7 +24,7 @@
 	-- Server
 
 	-- Dispatch to all clients
-	red.Store.dispatch(true, {
+	red.dispatch(true, {
 		type = "HELLO_WORLD",
 		payload = {
 			message = "Hello World"
@@ -32,7 +32,7 @@
 	})
 
 	-- Dispatch to one client
-	red.Store.dispatch(Players.Player1, {
+	red.dispatch(Players.Player1, {
 		type = "HELLO_WORLD",
 		payload = {
 			message = "Hello World"
@@ -51,16 +51,122 @@ local Types = require(script.Parent.Types)
 local Util = require(script.Parent.Parent.Util)
 local redUtil = require(script.Parent.redUtil)
 
-local remotes = redUtil.getRemotes()
+local remotes: { Client: RemoteEvent } = redUtil.getRemotes()
 local isServer: boolean = RunService:IsServer()
 
 local Store = {}
-Store.__index = Store
 
 local _middleware: { (action: Types.Action<any>) -> () } = {}
 
 local _connections: { [number]: RBXScriptConnection } = {}
 local _subscribers: { [Types.SubscriptionId]: (action: Types.Action<any>) -> nil } = {}
+
+function Store.bind(actionType: string, callback: Types.BindCallback)
+	Store.subscribeTo(actionType, function(action: Types.Action<any>)
+		local player: Player? = action.player
+
+		if player then
+			callback(player, action.payload)
+		end
+	end)
+end
+
+--[=[
+	Loads handlers that listen for actions dispatched by the store
+
+	```lua
+	-- Handlers/Player.luau
+
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+	local red = require(ReplicatedStorage.Packages.red)
+
+	return function(bind: red.Bind)
+		bind("PLAYER_RESPAWN_REQUEST", function(player: Player)
+			print(player.Name .. " is requesting a respawn")
+		end)
+
+		bind("PLAYER_TELEPORT", function(player: Player, payload: red.ActionPayload<CFrame>)
+			-- Player is requesting to teleport to a location
+			player.Character.PrimaryPart.CFrame = payload
+		end)
+	end
+	```
+
+	```lua
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+	local red = require(ReplicatedStorage.Packages.red)
+
+	-- Server
+
+	-- Require the handler
+	red.useHandler(require(script.Parent.Handlers.Player))
+
+	-- Give the location of a handler ModuleScript
+	red.useHandler(script.Parent.Handlers.Player)
+	```
+
+	@within Store
+	@method useHandler
+	@param handler Handler | ModuleScript
+]=]
+function Store.useHandler(handler: Types.Handler | ModuleScript)
+	local _handler: Types.Handler
+
+	if typeof(handler) == "function" then
+		_handler = handler
+	elseif typeof(handler) == "Instance" and handler:IsA("ModuleScript") then
+		_handler = require(handler) :: Types.Handler
+	end
+
+	if _handler then
+		_handler(Store.bind)
+	end
+end
+
+--[=[
+	Shortcut for `useHandler()` that loads multiple handlers.
+
+	Loads multiple handlers that listen for actions dispatched by the store
+
+	Methods of use:
+	```lua
+	local Player = require(script.Parent.Handlers.Player)
+	local Game = require(script.Parent.Handlers.Game)
+
+	red.useHandlers({
+		Player,
+		Game
+	})
+	```
+
+	```lua
+	-- Load a folder of handlers
+	red.useHandlers(script.Parent.Handlers)
+	```
+
+	@within Store
+	@method useHandlers
+	@param handlers { Handler | ModuleScript } | Instance
+]=]
+function Store.useHandlers(handlers: { Types.Handler | ModuleScript } | Instance)
+	local _handlers: { Types.Handler | ModuleScript }
+
+	if typeof(handlers) == "Instance" then
+		_handlers = {}
+
+		for _, handler: ModuleScript | Instance in pairs(handlers:GetChildren()) do
+			if handler:IsA("ModuleScript") then
+				table.insert(_handlers, handler)
+			end
+		end
+	end
+
+	for _, handler: Types.Handler | ModuleScript in pairs(_handlers) do
+		Store.useHandler(handler)
+	end
+end
 
 --[=[
 	Applies middleware to the store

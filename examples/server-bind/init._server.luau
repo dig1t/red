@@ -6,17 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Util = require(ReplicatedStorage.Packages.Util)
 local red = require(ReplicatedStorage.Packages.red)
 
-local server = red.Server.new()
-
-do -- Initialize
-	--server:loadServices(script:GetChildren())
-	server:init()
-end
-
--- @desc teleports a player
--- @param object player - player object
--- @param object location - teleport point
-server:bind("PLAYER_TELEPORT", function(player, payload)
+red.bind("PLAYER_TELEPORT", function(player, payload)
 	if Util.isAlive(player) then
 		task.wait()
 
@@ -36,9 +26,8 @@ local function playerAdded(player)
 
 		character:WaitForChild("Humanoid")
 
-		server:call({
+		red.dispatch(player, {
 			type = "PLAYER_TELEPORT",
-			player = player,
 			payload = {
 				location = CFrame.new(Util.random(-100, 100), 40, Util.random(-100, 100)),
 			},

@@ -1,7 +1,7 @@
 local red = require(game.ReplicatedStorage.Packages.red)
 
-return function(server: red.ServerType)
-	server:bind("GET_DATA", function(_player: Player)
+return function(bind: red.Bind)
+	bind("GET_DATA", function(_player: Player)
 		print("Getting data...")
 		task.wait(1)
 

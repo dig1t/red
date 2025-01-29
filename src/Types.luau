@@ -2,6 +2,9 @@
 
 export type SubscriptionId = string
 
+export type BindCallback = (Player, ActionPayload<any>) -> ()
+export type Bind = (string, BindCallback) -> ()
+
 export type ActionPayload<T> = T
 
 export type Action<T> = {
@@ -14,5 +17,7 @@ export type Action<T> = {
 	success: boolean?,
 	err: string?,
 }
+
+export type Handler = (Bind) -> ()
 
 return {}

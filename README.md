@@ -2,18 +2,16 @@
 
 ## What is red?
 red is a lightweight, easy-to-use, and efficient event-driven library for Roblox.
-red provides a simple API that allows you to create and manage events, actions, and state in your game.
+red provides a simple API that allows you to create and manage events and actions in your game.
 
 ## Benefits
 - **Simple API**: red is designed to be easy to use and understand, making it perfect for developers of all skill levels.
 - **Lightweight**: red is a lightweight library, meaning that it won't slow down your game or take up unnecessary resources.
-- **State Management**: red provides a simple and efficient way to manage state in your game, allowing you to easily keep track of the current state of your game.
 - **Type Safety**: red is typed and provides type safety, making it easier to catch errors and bugs in your code.
 
 ## Features
 - **Stores**: The store is how you will dispatch and listen for events in your game.
 - **Actions**: Actions are a way to perform side effects in response to events.
-- **State Management**: red provides a simple and efficient way to manage state in your game.
 - **Middleware**: Middleware allows you to intercept and modify events before they are dispatched.
 
 ## Getting Started

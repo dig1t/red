@@ -31,7 +31,7 @@
       "$className": "ServerScriptService",
 
       "ServerSample": {
-        "$path": "sample"
+        "$path": "examples/server-bind"
       }
     }
   }
