@@ -119,16 +119,3 @@ jobs:
           mkdir -p ~/.wally
           printf "[tokens]\n\"https://api.wally.run/\" = \"%s\"" "$WALLY_TOKEN" >> ~/.wally/auth.toml
           wally publish
-
-      - name: Build package place file
-        run: rojo build -o ${{ github.event.repository.name }}.rbxl build.project.json
-
-      - name: Upload Roblox level file to release
-        uses: actions/upload-release-asset@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.createRelease.outputs.upload_url }}
-          asset_path: ${{ github.event.repository.name }}.rbxl
-          asset_name: ${{ github.event.repository.name }}.rbxl
-          asset_content_type: application/octet-stream
