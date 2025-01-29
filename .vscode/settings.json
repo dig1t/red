@@ -5,6 +5,7 @@
   "luau-lsp.sourcemap.enabled": true,
   "luau-lsp.sourcemap.rojoProjectFile": "dev.project.json",
   "luau-lsp.diagnostics.strictDatamodelTypes": false,
+  "luau-lsp.completion.imports.enabled": true,
   "luau-lsp.types.definitionFiles": [
     "testez.d.luau"
   ],
