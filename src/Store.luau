@@ -345,7 +345,7 @@ end
 function Store.get(action: Types.Action<any>): Types.Action<any>
 	assert(typeof(action) == "table", "Action must be a table")
 	assert(action.type, "Action must have an action type")
-	assert(not isServer, "Store.get() must be called from the client")
+	assert(not isServer, "red.get() must be called from the client")
 
 	local uid: string = Util.randomString(8)
 
@@ -528,7 +528,7 @@ end
 	@param id Types.SubscriptionId
 ]=]
 function Store.unsubscribe(id: Types.SubscriptionId)
-	assert(_subscribers[id], "Store.unsubscribe() - Event listener id does not exist")
+	assert(_subscribers[id], "red.unsubscribe() - Event listener id does not exist")
 
 	_subscribers[id] = nil
 
