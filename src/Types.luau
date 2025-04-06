@@ -1,7 +1,5 @@
 --!strict
 
-export type SubscriptionId = string
-
 export type BindCallback = (Player, ActionPayload<any>) -> ()
 export type Bind = (string, BindCallback) -> ()
 

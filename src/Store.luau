@@ -47,6 +47,7 @@ local RunService = game:GetService("RunService")
 
 local Constants = require(script.Parent.Constants)
 local Promise = require(script.Parent.Parent.Promise)
+local Signal = require(script.Parent.Parent.Signal)
 local Types = require(script.Parent.Types)
 local Util = require(script.Parent.Parent.Util)
 local redUtil = require(script.Parent.redUtil)
@@ -59,7 +60,7 @@ local Store = {}
 local _middleware: { (action: Types.Action<any>) -> () } = {}
 
 local _connections: { [number]: RBXScriptConnection } = {}
-local _subscribers: { [Types.SubscriptionId]: (action: Types.Action<any>) -> nil } = {}
+local signal: Signal.Signal<Types.Action<any>> = Signal.new()
 
 function Store.bind(actionType: string, callback: Types.BindCallback)
 	Store.subscribeTo(actionType, function(action: Types.Action<any>)
@@ -399,20 +400,14 @@ function Store.get(action: Types.Action<any>): Types.Action<any>
 		} :: Types.Action<any>
 end
 
-function Store._callSubscribers(action: Types.Action<any>, safeCall: boolean?)
+function Store._callSubscribers(action: Types.Action<any>)
 	if not action.type or action.method == "get" or action.method == "get_result" then
 		-- Ignore get method actions, these
 		-- will be processed by store.get()
 		return
 	end
 
-	for _, callback in pairs(_subscribers) do
-		if safeCall then
-			pcall(callback, action)
-		else
-			callback(action)
-		end
-	end
+	signal:Fire(action)
 end
 
 --[=[
@@ -420,23 +415,28 @@ end
 
 	When an action is dispatched, the callback function will be called with the action as an argument
 
+	When finished with the subscription, the connection should be disconnected
+	```lua
+	local connection: RBXScriptConnection = store.subscribe(function(action: red.Action)
+		print(action.type)
+	end)
+
+	connection:Disconnect()
+	```
+
 	@within Store
 	@method subscribe
 	@param callback (action: Types.Action<any>) -> ()
-	@return Types.SubscriptionId
+	@return RBXScriptConnection
 ]=]
-function Store.subscribe(
-	callback: (action: Types.Action<any>) -> ()
-): Types.SubscriptionId
+function Store.subscribe(callback: (action: Types.Action<any>) -> ()): RBXScriptConnection
 	assert(
 		typeof(callback) == "function",
 		"Callback argument must exist and be a function"
 	)
 
-	local subscriptionId: Types.SubscriptionId = Util.randomString(8) -- Unique reference ID used for unsubscribing
-
-	if Util.tableLength(_subscribers) == 0 then
-		-- Hook connections to start receiving events
+	if #_connections == 0 then
+		-- If there are no connections, start listening for events
 
 		if isServer then
 			-- store.dispatch() called from client
@@ -444,22 +444,20 @@ function Store.subscribe(
 				function(player: Player, action: Types.Action<any>)
 					action.player = player
 
-					Store._callSubscribers(action, true)
+					Store._callSubscribers(action)
 				end
 			)
 		else
 			-- store.dispatch() called from server
 			_connections[#_connections + 1] = remotes.Client.OnClientEvent:Connect(
 				function(action: Types.Action<any>)
-					Store._callSubscribers(action, false)
+					Store._callSubscribers(action)
 				end
 			)
 		end
 	end
 
-	_subscribers[subscriptionId] = callback
-
-	return subscriptionId
+	return signal:Connect(callback)
 end
 
 --[=[
@@ -477,70 +475,39 @@ end
 	end)
 	```
 
+	When finished with the subscription, the connection should be disconnected
+	```lua
+	local connection: RBXScriptConnection = store.subscribeTo("HELLO_WORLD", function(action: red.Action)
+		print(action.type)
+	end)
+
+	connection:Disconnect()
+	```
+
 	@within Store
 	@method subscribeTo
 	@param actionType { string } | string
 	@param callback (action: Types.Action<any>) -> ()
-	@return Types.SubscriptionId
+	@return RBXScriptConnection
 ]=]
 function Store.subscribeTo(
 	actionType: { string } | string,
 	callback: (action: Types.Action<any>) -> ()
-)
+): RBXScriptConnection
 	if typeof(actionType) == "string" then
 		actionType = { actionType }
 	end
 
 	local actionTypes = actionType :: { string }
 
-	local subscriptionId: Types.SubscriptionId = Store.subscribe(
+	return Store.subscribe(
 		function(action: Types.Action<any>)
 			if table.find(actionTypes, action.type) then
 				callback(action)
 			end
 		end
 	)
-
-	return subscriptionId
 end
 
---[=[
-	Unsubscribes a listener from the store using the subscription id returned from ```Store.subscribe()```.
-
-	```lua
-	-- Setup the listener
-	local connectionId
-
-	connectionId = store.subscribe(function(action: red.Action)
-		if action.type == "HELLO_WORLD" then
-			print(action.type)
-			store.unsubscribe(connectionId) -- Stop receiving actions
-		end
-	end)
-
-	task.wait(2)
-
-	store.unsubscribe(connectionId) -- Stop receiving actions
-	```
-
-	@within Store
-	@method unsubscribe
-	@param id Types.SubscriptionId
-]=]
-function Store.unsubscribe(id: Types.SubscriptionId)
-	assert(_subscribers[id], "red.unsubscribe() - Event listener id does not exist")
-
-	_subscribers[id] = nil
-
-	if Util.tableLength(_subscribers) == 0 then
-		-- Disconnect all connections to prevent
-		-- unneeded events from being received
-
-		for index: number, connection: RBXScriptConnection in pairs(_connections) do
-			connection:Disconnect()
-			_connections[index] = nil
-		end
-	end
-end
 
 return Store

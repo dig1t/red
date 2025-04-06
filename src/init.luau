@@ -3,8 +3,6 @@
 local Store = require(script.Store)
 local Types = require(script.Types)
 
-export type SubscriptionId = string
-
 export type ActionPayload<T> = Types.ActionPayload<T>
 export type Action<T> = Types.Action<T>
 
