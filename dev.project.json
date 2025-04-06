@@ -14,11 +14,15 @@
         },
 
         "Util": {
-          "$path": "modules/dlib/src/Util"
+          "$path": "modules/roblox-modules/src/Util"
         },
 
         "Promise": {
-          "$path": "modules/dlib/src/Promise"
+          "$path": "modules/roblox-modules/src/Promise"
+        },
+
+        "Signal": {
+          "$path": "modules/roblox-modules/src/Signal"
         }
       },
 
