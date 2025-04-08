@@ -18,7 +18,7 @@ red provides a simple API that allows you to create and manage events and action
 ### Installing as a wally dependency
 Add the below line to your wally.toml file
 ```toml
-red = "dig1t/red@2.2.0
+red = "dig1t/red@2.2.0"
 "
 ```
 ### Roblox Studio
