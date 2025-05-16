@@ -2,5 +2,5 @@
 luau-lsp = "JohnnyMorganz/luau-lsp@1.28.1"
 rojo = "rojo-rbx/rojo@7.4.1"
 selene = "Kampfkarren/selene@0.26.1"
-stylua = "JohnnyMorganz/StyLua@0.20.0"
+stylua = "JohnnyMorganz/StyLua@2.0.2"
 wally = "UpliftGames/wally@0.3.2"
