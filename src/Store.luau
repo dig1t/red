@@ -52,7 +52,7 @@ local Types = require(script.Parent.Types)
 local Util = require(script.Parent.Parent.Util)
 local redUtil = require(script.Parent.redUtil)
 
-local remotes: { Client: RemoteEvent } = redUtil.getRemotes()
+local remotes = redUtil.getRemotes()
 local isServer: boolean = RunService:IsServer()
 
 local Store = {}
@@ -300,13 +300,16 @@ function Store.dispatch(...: any)
 		end
 	end
 
+	local remoteToUse: RemoteEvent = action.unreliable and remotes.UnreliableClient
+		or remotes.Client :: any
+
 	if #args == 1 then
 		-- If no recipient is specified, then
 		-- the action will fire to the server
 		-- From either the client (client-to-server) or the server (server-to-server)
 
 		if not isServer then
-			remotes.Client:FireServer(action)
+			remoteToUse:FireServer(action)
 		end
 	elseif #args == 2 then
 		-- If a recipient is specified, then
@@ -318,14 +321,14 @@ function Store.dispatch(...: any)
 
 		if recipient and not fireToAll then
 			if typeof(recipient) == "Instance" and recipient:IsA("Player") then
-				remotes.Client:FireClient(recipient, action)
+				remoteToUse:FireClient(recipient, action)
 			elseif typeof(recipient) == "table" then
 				for _, player in pairs(recipient) do
-					remotes.Client:FireClient(player, action)
+					remoteToUse:FireClient(player, action)
 				end
 			end
 		elseif fireToAll then
-			remotes.Client:FireAllClients(action)
+			remoteToUse:FireAllClients(action)
 		else
 			warn(`Store - could not dispatch action: {action.type}`) -- Convert to error handler (?)
 		end
@@ -368,13 +371,16 @@ function Store.get(action: Types.Action<any>): Types.Action<any>
 	local responseReceived: boolean?
 
 	local promise = Promise.new(function(resolve, _reject)
-		connections[#connections + 1] = remotes.Client.OnClientEvent:Connect(
-			function(_action: Types.Action<any>)
-				if _action.method == "get_result" and _action.uid == uid then
-					resolve(_action)
-				end
+		local function resolveAction(_action: Types.Action<any>)
+			if _action.method == "get_result" and _action.uid == uid then
+				resolve(_action)
 			end
-		)
+		end
+
+		connections[#connections + 1] =
+			remotes.Client.OnClientEvent:Connect(resolveAction)
+		connections[#connections + 1] =
+			remotes.UnreliableClient.OnClientEvent:Connect(resolveAction)
 
 		Store.dispatch(action)
 	end)
@@ -391,6 +397,7 @@ function Store.get(action: Types.Action<any>): Types.Action<any>
 			for _, connection: RBXScriptConnection in pairs(connections) do
 				connection:Disconnect() -- Disconnect the watchers
 			end
+			connections = {} -- Clear the connections table
 		end)
 
 	local start: number = os.clock()
@@ -449,21 +456,27 @@ function Store.subscribe(callback: (action: Types.Action<any>) -> ()): RBXScript
 		-- If there are no connections, start listening for events
 
 		if isServer then
-			-- store.dispatch() called from client
-			_connections[#_connections + 1] = remotes.Client.OnServerEvent:Connect(
-				function(player: Player, action: Types.Action<any>)
-					action.player = player
+			local function handleServerEvent(player: Player, action: Types.Action<any>)
+				action.player = player
 
-					Store._callSubscribers(action)
-				end
-			)
+				Store._callSubscribers(action)
+			end
+
+			-- store.dispatch() called from client
+			_connections[#_connections + 1] =
+				remotes.Client.OnServerEvent:Connect(handleServerEvent)
+			_connections[#_connections + 1] =
+				remotes.UnreliableClient.OnServerEvent:Connect(handleServerEvent)
 		else
+			local function handleClientEvent(action: Types.Action<any>)
+				Store._callSubscribers(action)
+			end
+
 			-- store.dispatch() called from server
-			_connections[#_connections + 1] = remotes.Client.OnClientEvent:Connect(
-				function(action: Types.Action<any>)
-					Store._callSubscribers(action)
-				end
-			)
+			_connections[#_connections + 1] =
+				remotes.Client.OnClientEvent:Connect(handleClientEvent)
+			_connections[#_connections + 1] =
+				remotes.UnreliableClient.OnClientEvent:Connect(handleClientEvent)
 		end
 	end
 

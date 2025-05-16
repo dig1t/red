@@ -14,6 +14,7 @@ export type Action<T> = {
 	payload: ActionPayload<T>,
 	success: boolean?,
 	err: string?,
+	unreliable: boolean?,
 }
 
 export type Handler = (Bind) -> ()
