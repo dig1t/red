@@ -44,6 +44,7 @@
 --!strict
 
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 
 local Constants = require(script.Parent.Constants)
 local Promise = require(script.Parent.Parent.Promise)
@@ -62,19 +63,39 @@ local _middleware: { (action: Types.Action<any>) -> () } = {}
 local _connections: { [number]: RBXScriptConnection } = {}
 local signal: Signal.Signal<Types.Action<any>> = Signal.new()
 
+--[=[
+	Subscribes to an action type and binds a callback to it
+
+	Only one action type can be bound to a callback at a time.
+
+	`get` requests are handled by binded callbacks.
+	Whatever the callback returns will be sent back to the client
+
+	```lua
+	store.bind("HELLO_WORLD", function(player: Player, payload: red.ActionPayload)
+		print(player.Name .. " sent a hello world action")
+	end)
+	```
+
+	@within Store
+	@param actionType string
+	@param callback (player: Player, payload: Types.ActionPayload<any>) -> ()
+]=]
 function Store.bind(actionType: string, callback: Types.BindCallback)
 	Store.subscribeTo(actionType, function(action: Types.Action<any>)
 		local player: Player? = action.player
 
 		if player then
-			local res: Types.ActionPayload<any>? = callback(player, action.payload)
+			local success: boolean, res: Types.ActionPayload<any>? =
+				pcall(callback, player, action.payload)
 
 			-- Handle get requests
-			if res and action.method == "get" then
+			if action.method == "get" then
 				-- If the action is a get request, then
 				-- return the result to the client
 				action.method = "get_result"
-				action.payload = res
+				action.success = success
+				action.payload = if success then res else { err = res }
 
 				Store.dispatch(player, action)
 			end
@@ -119,7 +140,6 @@ end
 	```
 
 	@within Store
-	@method useHandler
 	@param handler Handler | ModuleScript
 ]=]
 function Store.useHandler(handler: Types.Handler | ModuleScript)
@@ -158,7 +178,6 @@ end
 	```
 
 	@within Store
-	@method useHandlers
 	@param handlers { Handler | ModuleScript } | Instance
 ]=]
 function Store.useHandlers(handlers: { Types.Handler | ModuleScript } | Instance)
@@ -167,14 +186,14 @@ function Store.useHandlers(handlers: { Types.Handler | ModuleScript } | Instance
 	if typeof(handlers) == "Instance" then
 		_handlers = {}
 
-		for _, handler: ModuleScript | Instance in pairs(handlers:GetChildren()) do
+		for _, handler: ModuleScript | Instance in handlers:GetChildren() do
 			if handler:IsA("ModuleScript") then
 				table.insert(_handlers, handler)
 			end
 		end
 	end
 
-	for _, handler: Types.Handler | ModuleScript in pairs(_handlers) do
+	for _, handler: Types.Handler | ModuleScript in _handlers do
 		Store.useHandler(handler)
 	end
 end
@@ -202,7 +221,6 @@ end
 	```
 
 	@within Store
-	@method use
 	@param middleware (action: Types.Action<any>) -> ()
 ]=]
 function Store.use(middleware: (action: Types.Action<any>) -> ())
@@ -265,7 +283,6 @@ end
 	```
 
 	@within Store
-	@method dispatch
 	@param target Player | { Player } | true
 	@param action Types.Action<any>
 ]=]
@@ -319,12 +336,15 @@ function Store.dispatch(...: any)
 
 		assert(isServer, "Dispatcher must be the server")
 
+		action.serverTime = Workspace:GetServerTimeNow()
+
 		if recipient and not fireToAll then
+			-- Handle single and multiple player dispatches
 			if typeof(recipient) == "Instance" and recipient:IsA("Player") then
 				remoteToUse:FireClient(recipient, action)
 			elseif typeof(recipient) == "table" then
-				for _, player in pairs(recipient) do
-					remoteToUse:FireClient(player, action)
+				for _, recipientPlayer in recipient do
+					remoteToUse:FireClient(recipientPlayer, action)
 				end
 			end
 		elseif fireToAll then
@@ -351,8 +371,36 @@ end
 	end
 	```
 
+	The requested action must be bound to a callback by using `store.bind()`
+	```lua
+	store.bind("PLAYER_STATS", function(player: Player)
+		local stats = {
+			kills = 10,
+			deaths = 5,
+		}
+
+		return stats -- This will be sent back to the client
+	end)
+
+	store.bind("EMPTY_ACTION", function(player: Player)
+		return nil
+	end)
+	```
+
+	The player will always receive back an action
+	regardless if the payload is nil or not.
+
+	```lua
+	red.subscribeTo("PLAYER_STATS", function(action: red.Action)
+		print(action.payload) -- { kills = 10, deaths = 5 }
+	end)
+
+	red.subscribeTo("EMPTY_ACTION", function(action: red.Action)
+		print(action.payload) -- nil
+	end)
+	```
+
 	@within Store
-	@method get
 	@param action Types.Action<any>
 	@return Types.Action<any>
 ]=]
@@ -367,8 +415,7 @@ function Store.get(action: Types.Action<any>): Types.Action<any>
 	action.method = "get"
 
 	local connections: { RBXScriptConnection } = {}
-	local res: Types.Action<any>?
-	local responseReceived: boolean?
+	local thread: thread = coroutine.running()
 
 	local promise = Promise.new(function(resolve, _reject)
 		local function resolveAction(_action: Types.Action<any>)
@@ -377,44 +424,45 @@ function Store.get(action: Types.Action<any>): Types.Action<any>
 			end
 		end
 
-		connections[#connections + 1] =
-			remotes.Client.OnClientEvent:Connect(resolveAction)
-		connections[#connections + 1] =
+		table.insert(connections, remotes.Client.OnClientEvent:Connect(resolveAction))
+		table.insert(
+			connections,
 			remotes.UnreliableClient.OnClientEvent:Connect(resolveAction)
+		)
 
 		Store.dispatch(action)
 	end)
-		:andThen(function(result: Types.Action<any>)
-			res = result
-			responseReceived = true
-		end)
-		:catch(function(err: string)
-			res = {
-				err = err,
-			} :: Types.Action<any>
-		end)
-		:finally(function()
-			for _, connection: RBXScriptConnection in pairs(connections) do
-				connection:Disconnect() -- Disconnect the watchers
-			end
-			connections = {} -- Clear the connections table
-		end)
 
-	local start: number = os.clock()
 	local timeout: number = action.timeout or Constants.STORE_TIMEOUT
 
-	repeat
-		RunService.Stepped:Wait()
-	until res ~= nil or responseReceived or os.clock() - start >= timeout
-
-	if not responseReceived then
+	local timeoutDelay: thread = task.delay(timeout, function()
 		promise:_reject(`Timed out while waiting for action: "{action.type}"`)
-	end
+	end)
 
-	return res
-		or {
-			err = "Action failed to return a result. Timeout exceeded",
-		} :: Types.Action<any>
+	promise
+		:andThen(function(result: Types.Action<any>)
+			coroutine.resume(thread, result)
+			task.cancel(timeoutDelay)
+		end)
+		:catch(function(err: string)
+			local _action = table.clone(action) :: Types.Action<any>
+			_action.method = "get_result"
+			_action.success = false
+			_action.payload = nil
+			_action.err = err or "Unknown error"
+
+			coroutine.resume(thread, _action)
+		end)
+		:finally(function()
+			for _, connection: RBXScriptConnection in connections do
+				connection:Disconnect() -- Disconnect the watchers
+			end
+
+			connections = {} -- Clear the connections table
+			task.cancel(timeoutDelay)
+		end)
+
+	return coroutine.yield() :: Types.Action<any>
 end
 
 function Store._callSubscribers(action: Types.Action<any>)
@@ -442,7 +490,6 @@ end
 	```
 
 	@within Store
-	@method subscribe
 	@param callback (action: Types.Action<any>) -> ()
 	@return RBXScriptConnection
 ]=]
@@ -508,7 +555,6 @@ end
 	```
 
 	@within Store
-	@method subscribeTo
 	@param actionType { string } | string
 	@param callback (action: Types.Action<any>) -> ()
 	@return RBXScriptConnection
