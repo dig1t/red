@@ -67,7 +67,17 @@ function Store.bind(actionType: string, callback: Types.BindCallback)
 		local player: Player? = action.player
 
 		if player then
-			callback(player, action.payload)
+			local res: Types.ActionPayload<any>? = callback(player, action.payload)
+
+			-- Handle get requests
+			if res and action.method == "get" then
+				-- If the action is a get request, then
+				-- return the result to the client
+				action.method = "get_result"
+				action.payload = res
+
+				Store.dispatch(player, action)
+			end
 		end
 	end)
 end
@@ -401,8 +411,8 @@ function Store.get(action: Types.Action<any>): Types.Action<any>
 end
 
 function Store._callSubscribers(action: Types.Action<any>)
-	if not action.type or action.method == "get" or action.method == "get_result" then
-		-- Ignore get method actions, these
+	if not action.type or action.method == "get_result" then
+		-- Ignore get_result action methods, these
 		-- will be processed by store.get()
 		return
 	end
@@ -500,14 +510,11 @@ function Store.subscribeTo(
 
 	local actionTypes = actionType :: { string }
 
-	return Store.subscribe(
-		function(action: Types.Action<any>)
-			if table.find(actionTypes, action.type) then
-				callback(action)
-			end
+	return Store.subscribe(function(action: Types.Action<any>)
+		if table.find(actionTypes, action.type) then
+			callback(action)
 		end
-	)
+	end)
 end
-
 
 return Store
