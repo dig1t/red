@@ -61,7 +61,47 @@ local Store = {}
 local _middleware: { (action: Types.Action<any>) -> () } = {}
 
 local _connections: { [number]: RBXScriptConnection } = {}
-local signal: Signal.Signal<Types.Action<any>> = Signal.new()
+local ActionReceived: Signal.Signal<Types.Action<any>> = Signal.new()
+
+local function listenForEvents()
+	if #_connections > 0 then
+		return
+	end
+
+	-- If there are no connections, start listening for events
+
+	if isServer then
+		local function handleServerEvent(player: Player, action: Types.Action<any>)
+			action.player = player
+
+			Store._callSubscribers(action)
+		end
+
+		-- store.dispatch() called from client
+		table.insert(
+			_connections,
+			remotes.Client.OnServerEvent:Connect(handleServerEvent)
+		)
+		table.insert(
+			_connections,
+			remotes.UnreliableClient.OnServerEvent:Connect(handleServerEvent)
+		)
+	else
+		local function handleClientEvent(action: Types.Action<any>)
+			Store._callSubscribers(action)
+		end
+
+		-- store.dispatch() called from server
+		table.insert(
+			_connections,
+			remotes.Client.OnClientEvent:Connect(handleClientEvent)
+		)
+		table.insert(
+			_connections,
+			remotes.UnreliableClient.OnClientEvent:Connect(handleClientEvent)
+		)
+	end
+end
 
 --[=[
 	Subscribes to an action type and binds a callback to it
@@ -83,23 +123,32 @@ local signal: Signal.Signal<Types.Action<any>> = Signal.new()
 ]=]
 function Store.bind(actionType: string, callback: Types.BindCallback)
 	Store.subscribeTo(actionType, function(action: Types.Action<any>)
-		local player: Player? = action.player
-
-		if player then
-			local success: boolean, res: Types.ActionPayload<any>? =
-				pcall(callback, player, action.payload)
-
-			-- Handle get requests
-			if action.method == "get" then
-				-- If the action is a get request, then
-				-- return the result to the client
-				action.method = "get_result"
-				action.success = success
-				action.payload = if success then res else { err = res }
-
-				Store.dispatch(player, action)
-			end
+		if not action.player then
+			return
 		end
+
+		local callbackSuccess: boolean, result: Types.ActionPayload<any>? =
+			pcall(callback, action.player, action.payload)
+
+		-- Handle get requests
+		if action.method ~= "get" then
+			return
+		end
+
+		-- If the action is a get request, then
+		-- return the result to the client
+		action.method = "get_result"
+		action.success = callbackSuccess
+
+		if callbackSuccess then
+			action.payload = result
+		else
+			-- "result" contains the error message
+			action.payload = nil
+			action.err = result
+		end
+
+		Store.dispatch(action.player, action)
 	end)
 end
 
@@ -472,7 +521,7 @@ function Store._callSubscribers(action: Types.Action<any>)
 		return
 	end
 
-	signal:Fire(action)
+	ActionReceived:Fire(action)
 end
 
 --[=[
@@ -499,35 +548,9 @@ function Store.subscribe(callback: (action: Types.Action<any>) -> ()): RBXScript
 		"Callback argument must exist and be a function"
 	)
 
-	if #_connections == 0 then
-		-- If there are no connections, start listening for events
+	listenForEvents()
 
-		if isServer then
-			local function handleServerEvent(player: Player, action: Types.Action<any>)
-				action.player = player
-
-				Store._callSubscribers(action)
-			end
-
-			-- store.dispatch() called from client
-			_connections[#_connections + 1] =
-				remotes.Client.OnServerEvent:Connect(handleServerEvent)
-			_connections[#_connections + 1] =
-				remotes.UnreliableClient.OnServerEvent:Connect(handleServerEvent)
-		else
-			local function handleClientEvent(action: Types.Action<any>)
-				Store._callSubscribers(action)
-			end
-
-			-- store.dispatch() called from server
-			_connections[#_connections + 1] =
-				remotes.Client.OnClientEvent:Connect(handleClientEvent)
-			_connections[#_connections + 1] =
-				remotes.UnreliableClient.OnClientEvent:Connect(handleClientEvent)
-		end
-	end
-
-	return signal:Connect(callback)
+	return ActionReceived:Connect(callback)
 end
 
 --[=[
