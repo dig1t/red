@@ -15,6 +15,7 @@ export type Action<T> = {
 	success: boolean?,
 	err: string?,
 	unreliable: boolean?,
+	serverTime: number?,
 }
 
 export type Handler = (Bind) -> ()
