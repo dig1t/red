@@ -483,15 +483,20 @@ function Store.get(action: Types.Action<any>): Types.Action<any>
 	end)
 
 	local timeout: number = action.timeout or Constants.STORE_TIMEOUT
+	local timedOut = false
 
 	local timeoutDelay: thread = task.delay(timeout, function()
-		promise:_reject(`Timed out while waiting for action: "{action.type}"`)
+		timedOut = true
+
+		if promise.status ~= promise.statusType.fulfilled then
+			promise:_reject(`Timed out while waiting for action: "{action.type}"`)
+		end
 	end)
 
 	promise
 		:andThen(function(result: Types.Action<any>)
 			coroutine.resume(thread, result)
-			task.cancel(timeoutDelay)
+			--task.cancel(timeoutDelay) -- Did not time out
 		end)
 		:catch(function(err: string)
 			local _action = table.clone(action) :: Types.Action<any>
@@ -508,7 +513,10 @@ function Store.get(action: Types.Action<any>): Types.Action<any>
 			end
 
 			connections = {} -- Clear the connections table
-			task.cancel(timeoutDelay)
+
+			if not timedOut and coroutine.status(timeoutDelay) == "running" then
+				task.cancel(timeoutDelay)
+			end
 		end)
 
 	return coroutine.yield() :: Types.Action<any>
