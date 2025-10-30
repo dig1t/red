@@ -130,6 +130,11 @@ function Store.bind(actionType: string, callback: Types.BindCallback)
 		local callbackSuccess: boolean, result: Types.ActionPayload<any>? =
 			pcall(callback, action.player, action.payload)
 
+		if not callbackSuccess then
+			warn(`[red] bind error: {result or `Unknown error for {action.type}`}`)
+			return
+		end
+
 		-- Handle get requests
 		if action.method ~= "get" then
 			return
