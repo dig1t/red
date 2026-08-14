@@ -11,5 +11,5 @@ exclude = ["src/**/*.spec.luau"]
 
 [dependencies]
 Promise = "dig1t/promise@1.1.3"
-Signal = "dig1t/signal@1.0.0"
+Signal = "dig1t/signal@1.0.4"
 Util = "dig1t/util@1.0.16"
