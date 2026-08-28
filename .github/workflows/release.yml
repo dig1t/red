@@ -10,6 +10,9 @@ on:
     paths:
       - 'version.txt'
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-24.04
@@ -25,7 +28,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Get version
         id: version
@@ -84,8 +87,12 @@ jobs:
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git add --all
-          git commit -m "Update to v${{ steps.version.outputs.version }}"
-          git push -u origin main --force-with-lease || true
+          if git diff --cached --quiet; then
+            echo "Files already at v${{ steps.version.outputs.version }}, nothing to commit"
+          else
+            git commit -m "Update to v${{ steps.version.outputs.version }}"
+            git push -u origin main --force-with-lease
+          fi
 
           COMMIT_SHA=$(git rev-parse HEAD)
 
